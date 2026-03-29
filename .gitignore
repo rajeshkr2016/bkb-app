@@ -1,0 +1,7 @@
+# Claude Code
+.claude/
+
+# Jupyter/IPython
+.ipynb_checkpoints/
+*.pyc
+__pycache__/
