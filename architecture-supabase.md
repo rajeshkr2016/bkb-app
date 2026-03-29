@@ -25,91 +25,6 @@ graph TB
 
 ---
 
-## Database Tables
-
-```mermaid
-erDiagram
-    users ||--|| profiles : has
-    profiles ||--|{ photos : has
-    profiles }|--|{ interests : tagged_with
-    users ||--|{ swipes : makes
-    users ||--|{ matches : participates_in
-    matches ||--|{ messages : contains
-    users ||--|{ reports : files
-
-    users {
-        uuid id PK
-        string email
-        string phone
-        timestamp last_active
-    }
-    profiles {
-        uuid id PK
-        uuid user_id FK
-        string name
-        date dob
-        string gender
-        string bio
-        float lat
-        float lng
-        int distance_pref
-        int age_min
-        int age_max
-        string gender_pref
-    }
-    photos {
-        uuid id PK
-        uuid profile_id FK
-        string url
-        int position
-    }
-    interests {
-        uuid id PK
-        string name
-    }
-    swipes {
-        uuid id PK
-        uuid swiper_id FK
-        uuid swiped_id FK
-        string action
-        timestamp created_at
-    }
-    matches {
-        uuid id PK
-        uuid user_a FK
-        uuid user_b FK
-        timestamp matched_at
-        boolean active
-    }
-    messages {
-        uuid id PK
-        uuid match_id FK
-        uuid sender_id FK
-        string content
-        timestamp sent_at
-        boolean is_read
-    }
-    reports {
-        uuid id PK
-        uuid reporter_id FK
-        uuid reported_id FK
-        string reason
-        string status
-    }
-```
-
----
-
-## What You Don't Need to Build
-
-- **Backend server** — Supabase API + Edge Functions
-- **Auth service** — Supabase Auth
-- **WebSocket server** — Supabase Realtime
-- **File storage / CDN** — Supabase Storage
-- **Database hosting** — Managed PostgreSQL
-- **Row-level security** — Built into Supabase policies
-
----
 
 ## Advantages Over Custom Backend Architecture
 
@@ -206,3 +121,89 @@ graph TB
     Edge --> ModFn[Content Moderation]
     Edge --> DB
 ```
+
+## Database Tables
+
+```mermaid
+erDiagram
+    users ||--|| profiles : has
+    profiles ||--|{ photos : has
+    profiles }|--|{ interests : tagged_with
+    users ||--|{ swipes : makes
+    users ||--|{ matches : participates_in
+    matches ||--|{ messages : contains
+    users ||--|{ reports : files
+
+    users {
+        uuid id PK
+        string email
+        string phone
+        timestamp last_active
+    }
+    profiles {
+        uuid id PK
+        uuid user_id FK
+        string name
+        date dob
+        string gender
+        string bio
+        float lat
+        float lng
+        int distance_pref
+        int age_min
+        int age_max
+        string gender_pref
+    }
+    photos {
+        uuid id PK
+        uuid profile_id FK
+        string url
+        int position
+    }
+    interests {
+        uuid id PK
+        string name
+    }
+    swipes {
+        uuid id PK
+        uuid swiper_id FK
+        uuid swiped_id FK
+        string action
+        timestamp created_at
+    }
+    matches {
+        uuid id PK
+        uuid user_a FK
+        uuid user_b FK
+        timestamp matched_at
+        boolean active
+    }
+    messages {
+        uuid id PK
+        uuid match_id FK
+        uuid sender_id FK
+        string content
+        timestamp sent_at
+        boolean is_read
+    }
+    reports {
+        uuid id PK
+        uuid reporter_id FK
+        uuid reported_id FK
+        string reason
+        string status
+    }
+```
+
+---
+
+## What You Don't Need to Build
+
+- **Backend server** — Supabase API + Edge Functions
+- **Auth service** — Supabase Auth
+- **WebSocket server** — Supabase Realtime
+- **File storage / CDN** — Supabase Storage
+- **Database hosting** — Managed PostgreSQL
+- **Row-level security** — Built into Supabase policies
+
+---
