@@ -12,4 +12,5 @@ No source code yet — the repo contains architecture docs and use case specific
 - [architecture.md](architecture.md) — System architecture (custom backend, ~2000 user scale)
 - [architecture-supabase.md](architecture-supabase.md) — Supabase architecture (recommended), with comparison and resource limits
 - [docs/use-cases.md](docs/use-cases.md) — Feature requirements and user flows
-- [docs/component-architecture.md](docs/component-architecture.md) — Frontend and backend component diagrams
+- [docs/tech-stack.md](docs/tech-stack.md) — Tech stack decision (Expo/React Native + Supabase), key libraries, and project structure
+- [docs/requirements.md](docs/requirements.md) — Minimal requirements, costs, and checklist for publishing the app
