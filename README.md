@@ -14,3 +14,4 @@ No source code yet — the repo contains architecture docs and use case specific
 - [docs/use-cases.md](docs/use-cases.md) — Feature requirements and user flows
 - [docs/tech-stack.md](docs/tech-stack.md) — Tech stack decision (Expo/React Native + Supabase), key libraries, and project structure
 - [docs/requirements.md](docs/requirements.md) — Minimal requirements, costs, and checklist for publishing the app
+- [docs/changelog.md](docs/changelog.md) — All fixes, security patches, and feature additions
