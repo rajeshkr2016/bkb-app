@@ -4,21 +4,10 @@
 
 ```mermaid
 graph TB
-    App[Mobile App<br/>React Native] --> Auth[Supabase Auth<br/>Email, Phone, Google, Apple]
-    App --> API[Supabase REST API<br/>Auto-generated from tables]
-    App --> Realtime[Supabase Realtime<br/>Chat, Match Alerts, Presence]
-    App --> Storage[Supabase Storage<br/>Profile Photos + CDN]
-
-    API --> DB[(PostgreSQL<br/>Users, Profiles, Matches,<br/>Swipes, Chats, Reports)]
-    Auth --> DB
-    Realtime --> DB
-    Storage --> CDN[Built-in CDN]
-
-    API --> Edge[Edge Functions]
-    Edge --> MatchFn[Matching Logic<br/>PostGIS Distance + Scoring]
-    Edge --> NotifFn[Push Notifications<br/>FCM / APNs]
-    Edge --> ModFn[Content Moderation]
-    Edge --> DB
+    App[Mobile App] --> Supabase[Supabase]
+    Supabase --> DB[(PostgreSQL)]
+    Supabase --> Storage[(Media Storage)]
+    Supabase --> Edge[Edge Functions<br/>Matching, Notifications]
 ```
 
 ---
@@ -194,3 +183,26 @@ While Supabase is a great fit at this scale, it comes with limits you should be 
 - **Upgrade to Pro ($25/mo)** when storage or bandwidth hits limits
 - **Watch for** — storage (photos fill up fast) and concurrent Realtime connections
 - **Plan ahead** — if you expect rapid growth beyond 10K users, design Edge Functions to be portable so you can migrate to a custom backend later if needed
+
+---
+
+## Detailed Infrastructure Diagram
+
+```mermaid
+graph TB
+    App[Mobile App<br/>React Native] --> Auth[Supabase Auth<br/>Email, Phone, Google, Apple]
+    App --> API[Supabase REST API<br/>Auto-generated from tables]
+    App --> Realtime[Supabase Realtime<br/>Chat, Match Alerts, Presence]
+    App --> Storage[Supabase Storage<br/>Profile Photos]
+
+    Auth --> DB[(PostgreSQL<br/>Users, Profiles, Matches,<br/>Swipes, Chats, Reports)]
+    API --> DB
+    Realtime --> DB
+    Storage --> CDN[Built-in CDN]
+
+    API --> Edge[Edge Functions]
+    Edge --> MatchFn[Matching Logic<br/>PostGIS Distance + Scoring]
+    Edge --> NotifFn[Push Notifications<br/>FCM / APNs]
+    Edge --> ModFn[Content Moderation]
+    Edge --> DB
+```
