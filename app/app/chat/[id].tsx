@@ -155,11 +155,7 @@ export default function ChatScreen() {
   const isMe = (senderId: string) => senderId === session?.user.id;
 
   const handleBack = () => {
-    if (router.canGoBack?.()) {
-      router.back();
-    } else {
-      router.replace("/(tabs)/chat");
-    }
+    router.replace("/(tabs)/matches");
   };
 
   return (
@@ -309,13 +305,7 @@ export default function ChatScreen() {
           style={styles.tabItem}
           onPress={() => router.replace("/(tabs)/matches")}
         >
-          <Text style={styles.tabText}>Matches</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => router.replace("/(tabs)/chat")}
-        >
-          <Text style={[styles.tabText, styles.tabTextActive]}>Chat</Text>
+          <Text style={[styles.tabText, styles.tabTextActive]}>Matches</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.tabItem}

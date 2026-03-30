@@ -5,39 +5,45 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { useAuth } from "../../src/hooks/useAuth";
 
 export default function SignUpScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const { signUp } = useAuth();
+  const router = useRouter();
   const passwordRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
 
   const handleSignUp = async () => {
+    setErrorMsg("");
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      setErrorMsg("Please fill in all fields");
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert("Error", "Passwords don't match");
+      setErrorMsg("Passwords don't match");
       return;
     }
     if (password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters");
+      setErrorMsg("Password must be at least 6 characters");
       return;
     }
-    const error = await signUp(email, password);
-    if (error) {
-      Alert.alert("Sign Up Failed", error.message);
-    } else {
-      Alert.alert("Success", "Check your email for a confirmation link, or log in directly (local dev).");
+    try {
+      const error = await signUp(email, password);
+      if (error) {
+        setErrorMsg(error.message);
+      } else {
+        router.replace({ pathname: "/(auth)/confirm", params: { email } });
+      }
+    } catch (e: any) {
+      setErrorMsg(e?.message ?? "An unexpected error occurred.");
     }
   };
 
@@ -49,6 +55,8 @@ export default function SignUpScreen() {
       <View style={styles.inner}>
         <Text style={styles.title}>BKB Dating</Text>
         <Text style={styles.subtitle}>Create your account</Text>
+
+        {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
 
         <TextInput
           style={styles.input}
@@ -107,6 +115,15 @@ const styles = StyleSheet.create({
   inner: { flex: 1, justifyContent: "center", padding: 24 },
   title: { fontSize: 36, fontWeight: "bold", color: "#FF6B6B", textAlign: "center" },
   subtitle: { fontSize: 16, color: "#666", textAlign: "center", marginBottom: 40 },
+  error: {
+    color: "#D32F2F",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 12,
+    backgroundColor: "#FDECEA",
+    padding: 10,
+    borderRadius: 8,
+  },
   input: {
     borderWidth: 1,
     borderColor: "#ddd",

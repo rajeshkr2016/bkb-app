@@ -31,9 +31,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="chat"
         options={{
-          headerTitle: "BKB Dating - Chat",
-          tabBarLabel: "Chat",
-          tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 24 }}>{"..."}</Text>,
+          href: null,
         }}
       />
       <Tabs.Screen

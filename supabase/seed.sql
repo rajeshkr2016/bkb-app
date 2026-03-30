@@ -29,3 +29,16 @@ insert into public.profiles (id, name, date_of_birth, gender, bio, gender_pref) 
   ('44444444-4444-4444-4444-444444444444', 'Dana', '1996-01-30', 'female', 'Yoga instructor and dog mom', 'male'),
   ('55555555-5555-5555-5555-555555555555', 'Eve', '1997-09-12', 'non-binary', 'Artist and photographer', 'all')
 on conflict (id) do nothing;
+
+-- Assign interests to test profiles
+insert into public.profile_interests (profile_id, interest_id)
+select '11111111-1111-1111-1111-111111111111'::uuid, id from public.interests where name in ('Hiking', 'Coffee', 'Dogs', 'Fitness', 'Travel')
+union all
+select '22222222-2222-2222-2222-222222222222'::uuid, id from public.interests where name in ('Cooking', 'Coffee', 'Fitness', 'Movies', 'Music')
+union all
+select '33333333-3333-3333-3333-333333333333'::uuid, id from public.interests where name in ('Music', 'Travel', 'Photography', 'Gaming', 'Hiking')
+union all
+select '44444444-4444-4444-4444-444444444444'::uuid, id from public.interests where name in ('Yoga', 'Dogs', 'Dancing', 'Fitness', 'Coffee')
+union all
+select '55555555-5555-5555-5555-555555555555'::uuid, id from public.interests where name in ('Art', 'Photography', 'Movies', 'Reading', 'Music')
+on conflict do nothing;

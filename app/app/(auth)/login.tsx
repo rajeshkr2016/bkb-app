@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
@@ -15,16 +14,22 @@ import { useAuth } from "../../src/hooks/useAuth";
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const { signIn } = useAuth();
   const passwordRef = useRef<TextInput>(null);
 
   const handleLogin = async () => {
+    setErrorMsg("");
     if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
+      setErrorMsg("Please fill in all fields");
       return;
     }
-    const error = await signIn(email, password);
-    if (error) Alert.alert("Login Failed", error.message);
+    try {
+      const error = await signIn(email, password);
+      if (error) setErrorMsg(error.message);
+    } catch (e: any) {
+      setErrorMsg(e?.message ?? "An unexpected error occurred.");
+    }
   };
 
   return (
@@ -36,6 +41,7 @@ export default function LoginScreen() {
         <Text style={styles.title}>BKB Dating</Text>
         <Text style={styles.subtitle}>Find your match</Text>
 
+        {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
 
         <TextInput
           style={styles.input}
@@ -82,6 +88,15 @@ const styles = StyleSheet.create({
   inner: { flex: 1, justifyContent: "center", padding: 24 },
   title: { fontSize: 36, fontWeight: "bold", color: "#FF6B6B", textAlign: "center" },
   subtitle: { fontSize: 16, color: "#666", textAlign: "center", marginBottom: 40 },
+  error: {
+    color: "#D32F2F",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 12,
+    backgroundColor: "#FDECEA",
+    padding: 10,
+    borderRadius: 8,
+  },
   input: {
     borderWidth: 1,
     borderColor: "#ddd",

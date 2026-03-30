@@ -5,9 +5,10 @@
 .env.local
 .env
 
-# Firebase / Google Services (Android - contains API keys)
-# Note: GoogleService-Info.plist is committed (needed for App Distribution builds)
+# Firebase / Google Services (contains API keys)
 google-services.json
+GoogleService-Info.plist
+app/GoogleService-Info.plist
 
 # Jupyter/IPython
 .ipynb_checkpoints/

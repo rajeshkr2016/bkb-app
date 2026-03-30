@@ -5,15 +5,22 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
+import { useRouter } from "expo-router";
 import { useAuth } from "../../src/hooks/useAuth";
 import { useProfile, Profile } from "../../src/hooks/useProfile";
+import { useProfileStatus } from "../../src/context/ProfileContext";
+import { supabase } from "../../src/lib/supabase";
+
+type Interest = { id: string; name: string };
 
 export default function ProfileScreen() {
   const { session, signOut } = useAuth();
   const { getProfile, createProfile, updateProfile, loading } = useProfile();
+  const { markProfileComplete } = useProfileStatus();
+  const router = useRouter();
 
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
@@ -21,9 +28,29 @@ export default function ProfileScreen() {
   const [bio, setBio] = useState("");
   const [genderPref, setGenderPref] = useState("all");
   const [hasProfile, setHasProfile] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
+  const [isError, setIsError] = useState(false);
+
+  const [allInterests, setAllInterests] = useState<Interest[]>([]);
+  const [selectedInterestIds, setSelectedInterestIds] = useState<Set<string>>(new Set());
+  const [interestsLoading, setInterestsLoading] = useState(true);
+
+  const isSetupMode = !hasProfile;
 
   useEffect(() => {
     if (!session) return;
+
+    // Load all interests
+    supabase
+      .from("interests")
+      .select("id, name")
+      .order("name")
+      .then(({ data }) => {
+        if (data) setAllInterests(data);
+        setInterestsLoading(false);
+      });
+
+    // Load profile and user's selected interests
     getProfile(session.user.id).then(({ profile }) => {
       if (profile) {
         setName(profile.name);
@@ -34,18 +61,69 @@ export default function ProfileScreen() {
         setHasProfile(true);
       }
     });
+
+    supabase
+      .from("profile_interests")
+      .select("interest_id")
+      .eq("profile_id", session.user.id)
+      .then(({ data }) => {
+        if (data) {
+          setSelectedInterestIds(new Set(data.map((d) => d.interest_id)));
+        }
+      });
   }, [session]);
+
+  const toggleInterest = (id: string) => {
+    setSelectedInterestIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const saveInterests = async () => {
+    if (!session) return null;
+    // Delete existing and re-insert selected
+    const { error: delError } = await supabase
+      .from("profile_interests")
+      .delete()
+      .eq("profile_id", session.user.id);
+    if (delError) return delError;
+
+    if (selectedInterestIds.size > 0) {
+      const rows = Array.from(selectedInterestIds).map((interest_id) => ({
+        profile_id: session.user.id,
+        interest_id,
+      }));
+      const { error: insError } = await supabase
+        .from("profile_interests")
+        .insert(rows);
+      if (insError) return insError;
+    }
+    return null;
+  };
 
   const handleSave = async () => {
     if (!session) return;
-    if (!name || !dob) {
-      Alert.alert("Error", "Name and date of birth are required");
+    setStatusMsg("");
+    if (!name.trim()) {
+      setIsError(true);
+      setStatusMsg("Name is required");
+      return;
+    }
+    if (!dob || !/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+      setIsError(true);
+      setStatusMsg("Please enter a valid date of birth (YYYY-MM-DD)");
       return;
     }
 
     const profileData = {
       id: session.user.id,
-      name,
+      name: name.trim(),
       date_of_birth: dob,
       gender,
       bio,
@@ -61,10 +139,25 @@ export default function ProfileScreen() {
     }
 
     if (error) {
-      Alert.alert("Error", error.message);
-    } else {
-      setHasProfile(true);
-      Alert.alert("Success", "Profile saved!");
+      setIsError(true);
+      setStatusMsg(error.message);
+      return;
+    }
+
+    // Save interests
+    const intError = await saveInterests();
+    if (intError) {
+      setIsError(true);
+      setStatusMsg(intError.message);
+      return;
+    }
+
+    setHasProfile(true);
+    markProfileComplete();
+    setIsError(false);
+    setStatusMsg("Profile saved!");
+    if (isSetupMode) {
+      router.replace("/(tabs)/discover");
     }
   };
 
@@ -73,6 +166,21 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {isSetupMode ? (
+        <View style={styles.setupBanner}>
+          <Text style={styles.setupTitle}>Complete your profile</Text>
+          <Text style={styles.setupText}>
+            Set your name, date of birth, and interests to start discovering matches.
+          </Text>
+        </View>
+      ) : null}
+
+      {statusMsg ? (
+        <Text style={[styles.status, isError && styles.statusError]}>
+          {statusMsg}
+        </Text>
+      ) : null}
+
       <Text style={styles.label}>Name</Text>
       <TextInput
         style={styles.input}
@@ -117,7 +225,7 @@ export default function ProfileScreen() {
         numberOfLines={3}
       />
 
-      <Text style={styles.label}>Interested In</Text>
+      <Text style={styles.label}>Show Me</Text>
       <View style={styles.chips}>
         {genderPrefs.map((g) => (
           <TouchableOpacity
@@ -134,13 +242,37 @@ export default function ProfileScreen() {
         ))}
       </View>
 
+      <Text style={styles.label}>
+        Interests{selectedInterestIds.size > 0 ? ` (${selectedInterestIds.size})` : ""}
+      </Text>
+      {interestsLoading ? (
+        <ActivityIndicator size="small" color="#FF6B6B" />
+      ) : (
+        <View style={styles.chips}>
+          {allInterests.map((interest) => {
+            const selected = selectedInterestIds.has(interest.id);
+            return (
+              <TouchableOpacity
+                key={interest.id}
+                style={[styles.chip, selected && styles.chipActive]}
+                onPress={() => toggleInterest(interest.id)}
+              >
+                <Text style={[styles.chipText, selected && styles.chipTextActive]}>
+                  {interest.name}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+
       <TouchableOpacity
         style={styles.saveButton}
         onPress={handleSave}
         disabled={loading}
       >
         <Text style={styles.saveText}>
-          {loading ? "Saving..." : hasProfile ? "Update Profile" : "Create Profile"}
+          {loading ? "Saving..." : isSetupMode ? "Create Profile" : "Update Profile"}
         </Text>
       </TouchableOpacity>
 
@@ -154,6 +286,38 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   content: { padding: 24, paddingBottom: 48 },
+  setupBanner: {
+    backgroundColor: "#FFF3E0",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "#FFE0B2",
+  },
+  setupTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#E65100",
+    marginBottom: 4,
+  },
+  setupText: {
+    fontSize: 14,
+    color: "#BF360C",
+    lineHeight: 20,
+  },
+  status: {
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 12,
+    padding: 10,
+    borderRadius: 8,
+    color: "#2E7D32",
+    backgroundColor: "#E8F5E9",
+  },
+  statusError: {
+    color: "#D32F2F",
+    backgroundColor: "#FDECEA",
+  },
   label: { fontSize: 14, fontWeight: "600", color: "#333", marginTop: 16, marginBottom: 6 },
   input: {
     borderWidth: 1,

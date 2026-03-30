@@ -13,12 +13,19 @@ import { Profile } from "../../src/hooks/useProfile";
 
 const { width } = Dimensions.get("window");
 
+type DiscoverProfile = Profile & {
+  shared_interests: number;
+};
+
+type InterestName = { interests: { name: string } };
+
 export default function DiscoverScreen() {
   const { session } = useAuth();
-  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [profiles, setProfiles] = useState<DiscoverProfile[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [matchAlert, setMatchAlert] = useState<string | null>(null);
+  const [profileInterests, setProfileInterests] = useState<string[]>([]);
 
   const loadProfiles = useCallback(async () => {
     if (!session) return;
@@ -36,6 +43,29 @@ export default function DiscoverScreen() {
   useEffect(() => {
     loadProfiles();
   }, [loadProfiles]);
+
+  // Load interests for the current profile card
+  const currentProfile = profiles[currentIndex] as DiscoverProfile | undefined;
+
+  useEffect(() => {
+    if (!currentProfile) {
+      setProfileInterests([]);
+      return;
+    }
+    supabase
+      .from("profile_interests")
+      .select("interests ( name )")
+      .eq("profile_id", currentProfile.id)
+      .then(({ data }) => {
+        if (data) {
+          setProfileInterests(
+            (data as unknown as InterestName[]).map((d) => d.interests.name)
+          );
+        } else {
+          setProfileInterests([]);
+        }
+      });
+  }, [currentProfile?.id]);
 
   // Listen for new matches in realtime
   useEffect(() => {
@@ -84,8 +114,6 @@ export default function DiscoverScreen() {
       loadProfiles();
     }
   };
-
-  const currentProfile = profiles[currentIndex];
 
   if (loading) {
     return (
@@ -138,6 +166,27 @@ export default function DiscoverScreen() {
           {currentProfile.bio ? (
             <Text style={styles.bio}>{currentProfile.bio}</Text>
           ) : null}
+
+          {/* Shared interests badge */}
+          {currentProfile.shared_interests > 0 && (
+            <View style={styles.sharedBadge}>
+              <Text style={styles.sharedBadgeText}>
+                {currentProfile.shared_interests} shared interest
+                {currentProfile.shared_interests !== 1 ? "s" : ""}
+              </Text>
+            </View>
+          )}
+
+          {/* Interest chips */}
+          {profileInterests.length > 0 && (
+            <View style={styles.interestRow}>
+              {profileInterests.map((name) => (
+                <View key={name} style={styles.interestChip}>
+                  <Text style={styles.interestChipText}>{name}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </View>
 
@@ -187,6 +236,35 @@ const styles = StyleSheet.create({
   name: { fontSize: 28, fontWeight: "bold", color: "#333" },
   gender: { fontSize: 16, color: "#999", marginTop: 4 },
   bio: { fontSize: 16, color: "#666", marginTop: 8 },
+  sharedBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: "#E8F5E9",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginTop: 10,
+  },
+  sharedBadgeText: {
+    color: "#2E7D32",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  interestRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 10,
+  },
+  interestChip: {
+    backgroundColor: "#f0f0f0",
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  interestChipText: {
+    fontSize: 12,
+    color: "#666",
+  },
   actions: {
     flexDirection: "row",
     justifyContent: "center",
