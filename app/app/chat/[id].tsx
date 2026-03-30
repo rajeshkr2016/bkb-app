@@ -34,6 +34,7 @@ export default function ChatScreen() {
   const [showMenu, setShowMenu] = useState(false);
   const [otherUserId, setOtherUserId] = useState<string | null>(null);
   const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
 
   // Get the other user's ID from the match
   useEffect(() => {
@@ -142,6 +143,8 @@ export default function ChatScreen() {
     if (!text.trim() || !session || !matchId) return;
     const content = text.trim();
     setText("");
+    // Keep focus on input after sending
+    setTimeout(() => inputRef.current?.focus(), 50);
     await supabase.from("messages").insert({
       match_id: matchId,
       sender_id: session.user.id,
@@ -281,6 +284,8 @@ export default function ChatScreen() {
             placeholderTextColor="#999"
             onSubmitEditing={sendMessage}
             returnKeyType="send"
+            blurOnSubmit={false}
+            ref={inputRef}
           />
           <TouchableOpacity
             style={[styles.sendButton, !text.trim() && styles.sendDisabled]}

@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { supabase } from "../../src/lib/supabase";
 import { useAuth } from "../../src/hooks/useAuth";
 
@@ -72,9 +72,12 @@ export default function ChatListScreen() {
     setLoading(false);
   }, [session]);
 
-  useEffect(() => {
-    loadChats();
-  }, [loadChats]);
+  // Reload chats every time the tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      loadChats();
+    }, [loadChats])
+  );
 
   if (loading) {
     return (

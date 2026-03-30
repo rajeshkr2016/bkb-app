@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { supabase } from "../../src/lib/supabase";
 import { useAuth } from "../../src/hooks/useAuth";
 
@@ -56,9 +56,12 @@ export default function MatchesScreen() {
     setLoading(false);
   }, [session]);
 
-  useEffect(() => {
-    loadMatches();
-  }, [loadMatches]);
+  // Reload matches every time the tab is focused
+  useFocusEffect(
+    useCallback(() => {
+      loadMatches();
+    }, [loadMatches])
+  );
 
   if (loading) {
     return (

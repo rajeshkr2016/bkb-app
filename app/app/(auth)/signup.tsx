@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const { signUp } = useAuth();
+  const passwordRef = useRef<TextInput>(null);
+  const confirmRef = useRef<TextInput>(null);
 
   const handleSignUp = async () => {
     if (!email || !password) {
@@ -56,22 +58,32 @@ export default function SignUpScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
           placeholderTextColor="#999"
+          returnKeyType="next"
+          onSubmitEditing={() => passwordRef.current?.focus()}
+          blurOnSubmit={false}
         />
         <TextInput
+          ref={passwordRef}
           style={styles.input}
           placeholder="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry
           placeholderTextColor="#999"
+          returnKeyType="next"
+          onSubmitEditing={() => confirmRef.current?.focus()}
+          blurOnSubmit={false}
         />
         <TextInput
+          ref={confirmRef}
           style={styles.input}
           placeholder="Confirm Password"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry
           placeholderTextColor="#999"
+          returnKeyType="go"
+          onSubmitEditing={handleSignUp}
         />
 
         <TouchableOpacity style={styles.button} onPress={handleSignUp}>

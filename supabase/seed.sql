@@ -2,13 +2,13 @@
 -- Test password is stored in .env.local (not committed to git)
 -- The hash below is a bcrypt hash - no plaintext password in this file
 
-insert into auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, aud, role)
+insert into auth.users (id, instance_id, email, encrypted_password, email_confirmed_at, created_at, updated_at, aud, role, confirmation_token, recovery_token, email_change_token_new, email_change, raw_app_meta_data, raw_user_meta_data)
 values
-  ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'alice@test.com', '$2a$06$Rb9bpAJKWcfgwucid4wRu.cxoVR6Kv41IC8KaHoX7W4Jru6ECclIe', now(), now(), now(), 'authenticated', 'authenticated'),
-  ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', 'bob@test.com', '$2a$06$Rb9bpAJKWcfgwucid4wRu.cxoVR6Kv41IC8KaHoX7W4Jru6ECclIe', now(), now(), now(), 'authenticated', 'authenticated'),
-  ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'charlie@test.com', '$2a$06$Rb9bpAJKWcfgwucid4wRu.cxoVR6Kv41IC8KaHoX7W4Jru6ECclIe', now(), now(), now(), 'authenticated', 'authenticated'),
-  ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'dana@test.com', '$2a$06$Rb9bpAJKWcfgwucid4wRu.cxoVR6Kv41IC8KaHoX7W4Jru6ECclIe', now(), now(), now(), 'authenticated', 'authenticated'),
-  ('55555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000000', 'eve@test.com', '$2a$06$Rb9bpAJKWcfgwucid4wRu.cxoVR6Kv41IC8KaHoX7W4Jru6ECclIe', now(), now(), now(), 'authenticated', 'authenticated')
+  ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'alice@test.com', '$2a$06$Rb9bpAJKWcfgwucid4wRu.cxoVR6Kv41IC8KaHoX7W4Jru6ECclIe', now(), now(), now(), 'authenticated', 'authenticated', '', '', '', '', '{"provider":"email","providers":["email"]}', '{"email":"alice@test.com"}'),
+  ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', 'bob@test.com', '$2a$06$Rb9bpAJKWcfgwucid4wRu.cxoVR6Kv41IC8KaHoX7W4Jru6ECclIe', now(), now(), now(), 'authenticated', 'authenticated', '', '', '', '', '{"provider":"email","providers":["email"]}', '{"email":"bob@test.com"}'),
+  ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'charlie@test.com', '$2a$06$Rb9bpAJKWcfgwucid4wRu.cxoVR6Kv41IC8KaHoX7W4Jru6ECclIe', now(), now(), now(), 'authenticated', 'authenticated', '', '', '', '', '{"provider":"email","providers":["email"]}', '{"email":"charlie@test.com"}'),
+  ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'dana@test.com', '$2a$06$Rb9bpAJKWcfgwucid4wRu.cxoVR6Kv41IC8KaHoX7W4Jru6ECclIe', now(), now(), now(), 'authenticated', 'authenticated', '', '', '', '', '{"provider":"email","providers":["email"]}', '{"email":"dana@test.com"}'),
+  ('55555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000000', 'eve@test.com', '$2a$06$Rb9bpAJKWcfgwucid4wRu.cxoVR6Kv41IC8KaHoX7W4Jru6ECclIe', now(), now(), now(), 'authenticated', 'authenticated', '', '', '', '', '{"provider":"email","providers":["email"]}', '{"email":"eve@test.com"}')
 on conflict (id) do nothing;
 
 -- Insert auth identities (required by Supabase auth)
