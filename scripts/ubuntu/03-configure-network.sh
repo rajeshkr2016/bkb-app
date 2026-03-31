@@ -56,8 +56,7 @@ fi
 echo ""
 echo "[3/3] Binding Supabase API to all interfaces..."
 
-PROJECT_DIR="${SUDO_USER:+/home/$SUDO_USER}/bkb-app"
-[ ! -d "$PROJECT_DIR" ] && PROJECT_DIR="$HOME/bkb-app"
+PROJECT_DIR="/opt/projects/bkb-app"
 
 OVERRIDE_FILE="$PROJECT_DIR/supabase/docker-compose.override.yml"
 

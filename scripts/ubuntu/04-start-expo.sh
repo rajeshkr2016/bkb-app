@@ -13,7 +13,7 @@
 set -euo pipefail
 
 MODE="${1:---lan}"
-PROJECT_DIR="$HOME/bkb-app"
+PROJECT_DIR="/opt/projects/bkb-app"
 
 echo "========================================="
 echo " BKB Community — Start Expo Dev Server"

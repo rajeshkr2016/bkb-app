@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-PROJECT_DIR="$HOME/bkb-app"
+PROJECT_DIR="/opt/projects/bkb-app"
 
 echo "========================================="
 echo " BKB Community — Stop All Services"

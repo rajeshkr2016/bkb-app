@@ -4,20 +4,20 @@
 #
 # Usage: bash 02-setup-supabase.sh [repo-url]
 #
-# If repo-url is not provided, assumes the project is already at ~/bkb-app
+# Project is set up at /opt/bkb-app
 #
 
 set -euo pipefail
 
 REPO_URL="${1:-}"
-PROJECT_DIR="$HOME/bkb-app"
+PROJECT_DIR="/opt/projects/bkb-app"
 
 echo "========================================="
 echo " BKB Community — Setup Supabase Backend"
 echo "========================================="
 
-# --- Load nvm ---
-export NVM_DIR="$HOME/.nvm"
+# --- Load nvm from /opt ---
+export NVM_DIR="/opt/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 # --- Verify prerequisites ---
@@ -43,7 +43,7 @@ echo "  Supabase: $(supabase --version 2>/dev/null || echo 'OK')"
 
 # --- Clone or verify repo ---
 echo ""
-echo "[2/5] Setting up project..."
+echo "[2/5] Setting up project at $PROJECT_DIR..."
 
 if [ -n "$REPO_URL" ]; then
   if [ -d "$PROJECT_DIR" ]; then
@@ -60,7 +60,12 @@ else
     echo "  Using existing project at $PROJECT_DIR"
     cd "$PROJECT_DIR"
   else
-    echo "  ERROR: $PROJECT_DIR not found. Provide a repo URL:"
+    echo "  ERROR: $PROJECT_DIR not found."
+    echo ""
+    echo "  Either clone the repo first:"
+    echo "    sudo git clone <repo-url> $PROJECT_DIR"
+    echo ""
+    echo "  Or provide the repo URL:"
     echo "    bash 02-setup-supabase.sh https://github.com/user/bkb-app.git"
     exit 1
   fi
@@ -95,6 +100,8 @@ echo ""
 echo "========================================="
 echo " Supabase backend is ready!"
 echo "========================================="
+echo ""
+echo "Project:   $PROJECT_DIR"
 echo ""
 echo "Services:"
 echo "  API:     http://127.0.0.1:54321"

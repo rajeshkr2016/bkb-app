@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-PROJECT_DIR="$HOME/bkb-app"
+PROJECT_DIR="/opt/projects/bkb-app"
 PASS=0
 FAIL=0
 WARN=0
