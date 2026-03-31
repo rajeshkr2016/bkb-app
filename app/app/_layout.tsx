@@ -15,8 +15,10 @@ function RootNavigator() {
     if (!profileChecked && session) return;
     const inAuthGroup = segments[0] === "(auth)";
 
-    if (!session && !inAuthGroup) {
-      router.replace("/(auth)/login");
+    const inLandingGroup = segments[0] === "(landing)";
+
+    if (!session && !inAuthGroup && !inLandingGroup) {
+      router.replace("/(landing)");
     } else if (session && inAuthGroup) {
       if (profileComplete) {
         router.replace("/(tabs)/discover");

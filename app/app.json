@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "BKB Dating",
-    "slug": "bkb-dating",
-    "scheme": "bkb-dating",
+    "name": "BKB Community",
+    "slug": "bkb-community",
+    "scheme": "bkb-community",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -15,10 +15,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bkb.dating"
+      "bundleIdentifier": "com.bkb.community"
     },
     "android": {
-      "package": "com.bkb.dating",
+      "package": "com.bkb.community",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
