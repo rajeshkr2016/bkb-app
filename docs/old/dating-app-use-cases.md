@@ -1,10 +1,10 @@
-# Dating App - Use Cases & Architecture Diagrams
+# BKB Community App - Use Cases & Architecture Diagrams
 
 ## 1. Use Case Diagram
 
 ```mermaid
 graph TB
-    subgraph "Dating App Use Cases"
+    subgraph "BKB Community App Use Cases"
         subgraph "Authentication"
             UC1[Sign Up]
             UC2[Log In / Log Out]

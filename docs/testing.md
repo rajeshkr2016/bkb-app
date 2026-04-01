@@ -1,10 +1,10 @@
-# Dating App - Testing Guide
+# BKB Community App - Testing Guide
 
 ## Prerequisites
 
 | Requirement | Command to verify |
 |-------------|------------------|
-| Node.js v18+ | `node -v` |
+| Node.js v20+ | `node -v` (must be >= 20, required by React Native 0.81+) |
 | Docker Desktop | `docker --version` (must be running) |
 | Supabase CLI | `supabase --version` |
 | Expo Go app | Install from App Store / Play Store |
@@ -35,8 +35,8 @@ npx expo start
 | Supabase Studio | http://127.0.0.1:54323 | Dashboard loads |
 | Supabase API | http://127.0.0.1:54321 | JSON response |
 | Mailpit (email) | http://127.0.0.1:54324 | Inbox UI loads |
-| App (web) | http://localhost:8081 | Login screen |
-| App (Expo Go) | `exp://<your-lan-ip>:8081` | Login screen on phone |
+| App (web) | http://localhost:8081 | Landing page (community hub) |
+| App (Expo Go) | `exp://<your-lan-ip>:8081` | Landing page on phone |
 
 ---
 
@@ -53,6 +53,38 @@ npx expo start
 ---
 
 ## 3. Test Cases
+
+### Landing Page & Community Nav
+
+| # | Test | Steps | Expected Result |
+|---|------|-------|-----------------|
+| L1 | Landing page loads | Open app (not logged in) | Community hub with sub-app cards shown |
+| L2 | Active apps clickable | Tap Events, Dating, or Hiking cards | Navigates to the respective page |
+| L3 | Coming Soon apps | Tap a Coming Soon card (e.g., BKB Career) | Nothing happens, card shows "Coming Soon" badge |
+| L4 | Community nav visible | Navigate to Events, Dating tabs, or Hiking | Horizontal CommunityNav bar visible at bottom |
+| L5 | Community nav switching | Tap different apps in CommunityNav | Navigates to the selected sub-app |
+| L6 | Active indicator | Open Events page | "Events" highlighted in CommunityNav |
+
+### Events Page
+
+| # | Test | Steps | Expected Result |
+|---|------|-------|-----------------|
+| EV1 | Events load | Navigate to Events page | Event cards displayed with title, date, location |
+| EV2 | Filter by tag | Tap a tag filter (e.g., "Social") | Only events matching that tag shown |
+| EV3 | All filter | Tap "All" tag | All events shown |
+| EV4 | Event details | View an event card | Shows attendees, capacity, fee, description, tags |
+| EV5 | Meetup link | Tap "Meetup" button in header | Opens Meetup group page |
+| EV6 | Back button | Tap back arrow | Returns to landing page |
+
+### Hiking Page
+
+| # | Test | Steps | Expected Result |
+|---|------|-------|-----------------|
+| HK1 | Hiking page loads | Navigate to Hiking page | Two tabs visible: "Hiking Events" and "Meetup Page" |
+| HK2 | Upcoming hikes | View Hiking Events tab | Upcoming hikes shown with full details |
+| HK3 | Past hikes | Scroll down in Hiking Events tab | Past hikes shown with reduced opacity |
+| HK4 | Meetup webview | Tap "Meetup Page" tab | Embedded Meetup page loads in webview |
+| HK5 | Back button | Tap back arrow | Returns to landing page |
 
 ### Authentication
 
@@ -108,7 +140,7 @@ npx expo start
 | C6 | Send on enter | Type message, press Return/Enter | Message sent |
 | C7 | Empty send blocked | Tap Send with empty input | Button disabled, nothing sent |
 | C8 | Back button | Tap "Back" in chat header | Returns to previous screen |
-| C9 | Tab navigation | Tap tabs at bottom of chat screen | Navigates to correct tab |
+| C9 | Community nav in chat | CommunityNav visible at bottom of chat | Can switch to Events or Hiking from chat |
 
 ### Unmatch & Block
 
@@ -194,6 +226,9 @@ supabase stop
 |-------|-------|
 | No photo upload | Profile photos not implemented yet, shows initials instead |
 | No push notifications | Real-time works in-app only, no background push |
-| Discovery feed is basic | No distance/age filtering applied yet, shows all unswiped profiles |
+| No distance/age filtering | Discovery shows all unswiped profiles ranked by shared interests |
 | No typing indicators | Chat shows messages only, no "typing..." status |
-| Web tab bar styling | Web version uses basic tab styling, differs slightly from native |
+| Events are static | Event data is hardcoded in the app, not from a database |
+| Hiking events static | Hike data is hardcoded, Meetup webview requires internet |
+| Node.js 20+ required | React Native 0.81+ and Supabase JS 2.100+ require Node >= 20 |
+| Most community apps | Helpline, Women, Career, Stocks, etc. are Coming Soon placeholders |

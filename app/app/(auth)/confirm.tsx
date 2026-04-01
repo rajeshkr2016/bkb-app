@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Link, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
 import { supabase } from "../../src/lib/supabase";
+import CommunityNav from "../../src/components/CommunityNav";
 
 export default function ConfirmScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
@@ -28,6 +29,7 @@ export default function ConfirmScreen() {
   };
 
   return (
+    <>
     <View style={styles.container}>
       <View style={styles.inner}>
         <Text style={styles.icon}>✉️</Text>
@@ -66,6 +68,8 @@ export default function ConfirmScreen() {
         </Link>
       </View>
     </View>
+    <CommunityNav active="Dating" />
+    </>
   );
 }
 

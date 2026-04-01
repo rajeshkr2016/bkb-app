@@ -4,11 +4,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
 
 const APP_LINKS = [
+  {
+    title: "BKB Events",
+    description: "Discover local community events and meetups",
+    icon: "!",
+    route: "/events" as const,
+  },
   {
     title: "BKB Dating",
     description: "Find your perfect match in the BKB community",
@@ -19,7 +24,7 @@ const APP_LINKS = [
     title: "BKB Hiking",
     description: "Explore trails and join group hikes nearby",
     icon: "^",
-    route: null,
+    route: "/hiking" as const,
   },
   {
     title: "BKB Helpline",
@@ -61,12 +66,6 @@ const APP_LINKS = [
     title: "BKB Divorce Support",
     description: "Guidance, community, and resources for a fresh start",
     icon: "&",
-    route: null,
-  },
-  {
-    title: "BKB Events",
-    description: "Discover local community events and meetups",
-    icon: "!",
     route: null,
   },
   {

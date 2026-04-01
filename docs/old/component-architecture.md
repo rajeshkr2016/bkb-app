@@ -1,4 +1,4 @@
-# Dating App - Component Architecture
+# BKB Community App - Component Architecture
 
 ## 1. Frontend Components
 

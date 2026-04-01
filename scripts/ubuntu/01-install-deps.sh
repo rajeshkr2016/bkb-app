@@ -6,7 +6,7 @@
 #
 # Installs everything under /opt:
 #   /opt/nvm       — nvm (Node Version Manager)
-#   /opt/node      — Node.js 18 (symlinked to /usr/local/bin)
+#   /opt/node      — Node.js 20 (symlinked to /usr/local/bin)
 #
 
 set -euo pipefail
@@ -53,7 +53,7 @@ fi
 
 # --- Node.js via nvm in /opt ---
 echo ""
-echo "[3/4] Installing Node.js 18 via nvm (into /opt/nvm)..."
+echo "[3/4] Installing Node.js 20 via nvm (into /opt/nvm)..."
 
 export NVM_DIR="/opt/nvm"
 mkdir -p "$NVM_DIR"
@@ -71,16 +71,16 @@ if [ ! -s "$NVM_DIR/nvm.sh" ]; then
   exit 1
 fi
 
-# Install Node.js 18
+# Install Node.js 20 (required by React Native 0.81+ and Supabase JS 2.100+)
 source "$NVM_DIR/nvm.sh"
-nvm install 18
-nvm alias default 18
+nvm install 20
+nvm alias default 20
 
 echo "  Node.js: $(node --version)"
 echo "  npm:     $(npm --version)"
 
 # Make nvm-installed node/npm available system-wide via /usr/local/bin
-NODE_BIN="$(dirname "$(nvm which 18)")"
+NODE_BIN="$(dirname "$(nvm which 20)")"
 for bin in node npm npx; do
   ln -sf "$NODE_BIN/$bin" "/usr/local/bin/$bin"
 done

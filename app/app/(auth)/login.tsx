@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { Link } from "expo-router";
 import { useAuth } from "../../src/hooks/useAuth";
+import CommunityNav from "../../src/components/CommunityNav";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
@@ -33,12 +34,13 @@ export default function LoginScreen() {
   };
 
   return (
+    <>
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.inner}>
-        <Text style={styles.title}>BKB Dating</Text>
+        <Text style={styles.title}>BKB Community</Text>
         <Text style={styles.subtitle}>Find your match</Text>
 
         {errorMsg ? <Text style={styles.error}>{errorMsg}</Text> : null}
@@ -80,6 +82,8 @@ export default function LoginScreen() {
         </Link>
       </View>
     </KeyboardAvoidingView>
+    <CommunityNav active="Dating" />
+    </>
   );
 }
 

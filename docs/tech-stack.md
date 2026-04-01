@@ -1,4 +1,4 @@
-# Dating App - Tech Stack Decision
+# BKB Community App - Tech Stack Decision
 
 ## Recommended Stack
 
@@ -43,15 +43,14 @@ graph TB
 
 | Purpose | Library |
 |---------|---------|
-| Navigation | `react-navigation` |
+| Navigation | `expo-router` (file-based routing) |
 | Supabase client | `@supabase/supabase-js` |
-| Swipe cards | `react-native-deck-swiper` |
+| Embedded web content | `react-native-webview` |
 | Image picker | `expo-image-picker` |
 | Location | `expo-location` |
 | Push notifications | `expo-notifications` |
 | Gestures | `react-native-gesture-handler` |
-| State management | `zustand` or React Context |
-| Forms | `react-hook-form` |
+| State management | React Context (`ProfileProvider`) |
 
 ---
 
@@ -59,29 +58,48 @@ graph TB
 
 ```
 bkb-app/
-├── app/                    # Expo Router screens
-│   ├── (auth)/             # Login, Sign Up
-│   ├── (tabs)/             # Main tab navigation
-│   │   ├── discover.tsx    # Swipe screen
-│   │   ├── matches.tsx     # Match list
-│   │   ├── chat.tsx        # Chat list
-│   │   └── profile.tsx     # My profile
-│   └── chat/[id].tsx       # Chat conversation
-├── components/             # Reusable UI components
-│   ├── SwipeCard.tsx
-│   ├── ProfileCard.tsx
-│   ├── ChatBubble.tsx
-│   └── PhotoGrid.tsx
-├── lib/
-│   └── supabase.ts         # Supabase client init
-├── hooks/                  # Custom hooks
-│   ├── useAuth.ts
-│   ├── useMatches.ts
-│   └── useChat.ts
-├── types/                  # TypeScript types
-├── assets/                 # Images, fonts
-├── docs/                   # Documentation
-└── app.json                # Expo config
+├── app/                        # Expo Router screens
+│   ├── _layout.tsx             # Root layout (auth routing, ProfileProvider)
+│   ├── index.tsx               # Entry redirect
+│   ├── (landing)/              # Community hub
+│   │   └── index.tsx           # Landing page with all sub-app cards
+│   ├── (auth)/                 # Authentication
+│   │   ├── login.tsx           # Login screen
+│   │   ├── signup.tsx          # Sign up screen
+│   │   └── confirm.tsx         # Email confirmation
+│   ├── (tabs)/                 # Dating tab navigation
+│   │   ├── _layout.tsx         # Tab config (Discover, Matches, Profile)
+│   │   ├── discover.tsx        # Swipe / discovery screen
+│   │   ├── matches.tsx         # Match list + conversations
+│   │   ├── chat.tsx            # (hidden tab)
+│   │   └── profile.tsx         # My profile
+│   ├── chat/
+│   │   └── [id].tsx            # Chat conversation screen
+│   ├── events/
+│   │   └── index.tsx           # Events page (tag filtering, Meetup link)
+│   └── hiking/
+│       └── index.tsx           # Hiking page (events + Meetup webview)
+├── src/
+│   ├── components/
+│   │   └── CommunityNav.tsx    # Persistent community navigation bar
+│   ├── lib/
+│   │   └── supabase.ts        # Supabase client init
+│   ├── hooks/
+│   │   ├── useAuth.ts
+│   │   └── useProfile.ts
+│   └── context/
+│       └── ProfileContext.tsx   # Profile state provider
+├── assets/                     # Images, fonts
+├── docs/                       # Documentation
+├── scripts/                    # Deployment & utility scripts
+│   ├── ubuntu/                 # Ubuntu server setup scripts
+│   ├── whatsapp/               # WhatsApp community member scripts
+│   └── meetup/                 # Meetup group/member scripts
+├── supabase/                   # Supabase config & migrations
+│   ├── config.toml
+│   ├── migrations/
+│   └── seed.sql
+└── app.json                    # Expo config (com.bkb.community)
 ```
 
 ---

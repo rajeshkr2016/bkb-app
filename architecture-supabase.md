@@ -1,10 +1,27 @@
-# Dating App - Architecture (Supabase)
+# BKB Community App - Architecture (Supabase)
+
+## App Structure
+
+```mermaid
+graph TB
+    Landing[Landing Page<br/>Community Hub] --> Events[Events Page<br/>Tag Filtering + Meetup Link]
+    Landing --> Dating[Dating Feature<br/>Auth → Discover → Match → Chat]
+    Landing --> Hiking[Hiking Page<br/>Events + Meetup Webview]
+    Landing --> ComingSoon[Coming Soon<br/>Helpline, Women, Career,<br/>Stocks, Sports, Health, etc.]
+
+    CommunityNav[CommunityNav Bar] -.-> Events & Dating & Hiking
+```
+
+The app is a community hub. The **CommunityNav** component provides persistent navigation across all active features. Events and Hiking use static data + Meetup integration. Dating uses Supabase for auth, profiles, matching, and real-time chat.
+
+---
 
 ## Infrastructure Diagram
 
 ```mermaid
 graph TB
-    App[Mobile App] --> Supabase[Supabase]
+    App[Mobile App<br/>Expo / React Native] --> Supabase[Supabase]
+    App --> Meetup[Meetup.com<br/>Events & Hiking Webview]
     Supabase --> DB[(PostgreSQL)]
     Supabase --> Storage[(Media Storage)]
     Supabase --> Edge[Edge Functions<br/>Matching, Notifications]
@@ -59,7 +76,7 @@ While Supabase is a great fit at this scale, it comes with limits you should be 
 
 ### Free Tier Limits
 
-| Resource | Free Tier Limit | Impact on Dating App |
+| Resource | Free Tier Limit | Impact on Community App |
 |----------|----------------|----------------------|
 | **Database** | 500 MB | Enough for ~2000 users, gets tight with chat history growth |
 | **Storage** | 1 GB | ~150-200 users at 6 photos each (avg 1 MB per photo) |

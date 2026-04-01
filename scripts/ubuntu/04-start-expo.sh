@@ -19,9 +19,28 @@ echo "========================================="
 echo " BKB Community — Start Expo Dev Server"
 echo "========================================="
 
-# --- Load nvm ---
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+# --- Load nvm (installed to /opt/nvm by 01-install-deps.sh) ---
+export NVM_DIR="/opt/nvm"
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  . "$NVM_DIR/nvm.sh"
+  nvm use 20 --silent 2>/dev/null || true
+elif [ -s "$HOME/.nvm/nvm.sh" ]; then
+  export NVM_DIR="$HOME/.nvm"
+  . "$NVM_DIR/nvm.sh"
+  nvm use 20 --silent 2>/dev/null || true
+fi
+
+# --- Verify Node.js >= 20 (required by React Native 0.81+ and metro) ---
+NODE_MAJOR=$(node --version 2>/dev/null | sed 's/v\([0-9]*\).*/\1/')
+if [ -z "$NODE_MAJOR" ]; then
+  echo "ERROR: Node.js is not installed. Run 01-install-deps.sh first."
+  exit 1
+elif [ "$NODE_MAJOR" -lt 20 ]; then
+  echo "ERROR: Node.js $(node --version) is too old. Need >= 20."
+  echo "  Run: source /opt/nvm/nvm.sh && nvm install 20 && nvm alias default 20"
+  exit 1
+fi
+echo "  Node.js: $(node --version)"
 
 # --- Verify Supabase is running ---
 echo ""

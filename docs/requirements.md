@@ -1,12 +1,13 @@
-# Dating App - Minimal Requirements for Publishing & Hosting
+# BKB Community App - Minimal Requirements for Publishing & Hosting
 
 ## 1. App (Expo / React Native)
 
 ### To Develop
-- Node.js (v18+)
-- Expo CLI (`npx create-expo-app`)
+- Node.js (v20+) — required by React Native 0.81+ and Supabase JS 2.100+
+- Expo CLI (`npx expo start`)
 - Expo Go app on your phone (for testing)
 - Code editor (VS Code)
+- Docker Desktop (for local Supabase)
 
 ### To Publish on App Store (iOS)
 | Requirement | Details | Cost |
@@ -106,12 +107,19 @@
 ## 6. Checklist Before Publishing
 
 ### App Ready
-- [ ] Auth flow works (sign up, log in, log out)
-- [ ] Profile creation with photo upload
-- [ ] Swipe / like / pass functionality
-- [ ] Match notification
-- [ ] Basic chat working
-- [ ] Report / block user
+- [x] Landing page with community hub cards
+- [x] Community navigation bar across all screens
+- [x] Auth flow works (sign up, log in, email confirmation, log out)
+- [x] Profile creation (name, DOB, gender, bio, interests)
+- [x] Interest-based discovery with shared interests ranking
+- [x] Swipe / like / pass functionality
+- [x] Mutual-like matching with notification
+- [x] Real-time chat with Supabase Realtime
+- [x] Report / block / unmatch
+- [x] Events page with tag filtering and Meetup integration
+- [x] Hiking page with events and embedded Meetup webview
+- [ ] Profile photo upload
+- [ ] Push notifications
 
 ### Store Requirements
 - [ ] App icon (1024x1024)

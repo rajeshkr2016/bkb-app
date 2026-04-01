@@ -1,4 +1,4 @@
-# Dating App - Architecture (Small Scale ~2000 Users)
+# BKB Community App - Architecture (Small Scale ~2000 Users)
 
 ```mermaid
 graph TB

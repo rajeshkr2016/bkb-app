@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import CommunityNav from "../../src/components/CommunityNav";
 import {
   View,
   Text,
@@ -293,27 +294,7 @@ export default function ChatScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      {/* Bottom tab navigation */}
-      <View style={styles.tabBar}>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => router.replace("/(tabs)/discover")}
-        >
-          <Text style={styles.tabText}>Discover</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => router.replace("/(tabs)/matches")}
-        >
-          <Text style={[styles.tabText, styles.tabTextActive]}>Matches</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.tabItem}
-          onPress={() => router.replace("/(tabs)/profile")}
-        >
-          <Text style={styles.tabText}>Profile</Text>
-        </TouchableOpacity>
-      </View>
+      <CommunityNav active="Dating" />
     </SafeAreaView>
   );
 }

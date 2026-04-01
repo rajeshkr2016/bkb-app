@@ -36,8 +36,8 @@ echo " BKB Community — Health Check"
 echo "========================================="
 echo ""
 
-# --- Load nvm ---
-export NVM_DIR="$HOME/.nvm"
+# --- Load nvm (installed to /opt/nvm by 01-install-deps.sh) ---
+export NVM_DIR="/opt/nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 # --- 1. Docker ---

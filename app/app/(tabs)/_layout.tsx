@@ -1,8 +1,10 @@
 import { Tabs } from "expo-router";
-import { Text } from "react-native";
+import { View, Text } from "react-native";
+import CommunityNav from "../../src/components/CommunityNav";
 
 export default function TabLayout() {
   return (
+    <>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: "#FF6B6B",
@@ -43,5 +45,7 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    <CommunityNav active="Dating" />
+    </>
   );
 }
