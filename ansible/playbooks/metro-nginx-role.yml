@@ -4,5 +4,39 @@
   become: true
   vars_files:
     - ../group_vars/all.yml
+  pre_tasks:
+    - name: Read Metro env overrides from repo .env.local on the control machine
+      ansible.builtin.shell: |
+        if [ -f "{{ playbook_dir }}/../../.env.local" ]; then
+          set -a
+          . "{{ playbook_dir }}/../../.env.local"
+          printf 'METRO_DOMAIN=%s\n' "${METRO_DOMAIN:-}"
+          printf 'METRO_UPSTREAM=%s\n' "${METRO_UPSTREAM:-}"
+        fi
+      args:
+        executable: /bin/bash
+      delegate_to: localhost
+      become: false
+      register: metro_env_overrides
+      changed_when: false
+
+    - name: Parse Metro env overrides
+      ansible.builtin.set_fact:
+        metro_env_override_map: "{{ dict(metro_env_overrides.stdout_lines | map('split', '=', 1) | list) }}"
+      when: metro_env_overrides.stdout | trim != ""
+
+    - name: Override domain variables from repo .env.local when provided
+      ansible.builtin.set_fact:
+        metro_domain: "{{ metro_env_override_map.METRO_DOMAIN }}"
+      when:
+        - metro_env_override_map is defined
+        - (metro_env_override_map.METRO_DOMAIN | default('') | trim) != ""
+
+    - name: Override upstream variables from repo .env.local when provided
+      ansible.builtin.set_fact:
+        metro_upstream: "{{ metro_env_override_map.METRO_UPSTREAM }}"
+      when:
+        - metro_env_override_map is defined
+        - (metro_env_override_map.METRO_UPSTREAM | default('') | trim) != ""
   roles:
     - metro_nginx

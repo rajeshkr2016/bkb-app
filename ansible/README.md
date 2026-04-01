@@ -4,9 +4,10 @@ This directory contains Ansible assets to deploy nginx as a TLS-terminating reve
 
 ## Quick Start
 
-1. Update variables in `ansible/group_vars/all.yml`.
-2. Update host(s) in `ansible/inventory/hosts.ini`.
-3. Run the playbook:
+1. Set `METRO_DOMAIN` and/or `METRO_UPSTREAM` in the repo root `.env.local` file if you want to override the defaults.
+2. Update remaining variables in `ansible/group_vars/all.yml`.
+3. Update host(s) in `ansible/inventory/hosts.ini`.
+4. Run the playbook:
 
 ```bash
 ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/metro-nginx-role.yml
@@ -24,12 +25,12 @@ ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/metro-nginx-ro
 
 Set these in `ansible/group_vars/all.yml`:
 
-- `metro_web_domain`
-- `metro_mobile_domain`
-- `metro_web_upstream` (host:port)
-- `metro_mobile_upstream` (host:port)
+- `metro_upstream` (host:port)
 - `metro_ssl_cert_path`
 - `metro_ssl_key_path`
+
+The domain values default from `metro_domain` in `ansible/group_vars/all.yml`, and both playbooks will override that value from repo root `.env.local` when `METRO_DOMAIN=...` is present.
+The upstream values default from `metro_upstream` in `ansible/group_vars/all.yml`, and both playbooks will override that value from repo root `.env.local` when `METRO_UPSTREAM=host:port` is present.
 
 ## Optional Variables
 

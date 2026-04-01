@@ -60,16 +60,40 @@ server {
   proxy_set_header Upgrade $http_upgrade;
   proxy_set_header Connection "upgrade";
 
-  # Caching
-  proxy_cache metro_cache;
-  proxy_cache_bypass $http_cache_control $http_pragma;
-  proxy_no_cache $http_cache_control $http_pragma;
-  proxy_cache_valid 200 302 {{ metro_cache_valid_success | default('10m') }};
-  proxy_cache_valid 404 {{ metro_cache_valid_404 | default('1m') }};
-  add_header X-Cache-Status $upstream_cache_status;
+  location ~* ^/(hot|message)$ {
+    proxy_pass {{ metro_web_upstream_scheme | default('http') }}://metro_web_upstream;
+
+    proxy_cache off;
+    add_header X-Cache-Status BYPASS always;
+
+    # Upstream TLS settings (used when scheme is https)
+    proxy_ssl_server_name on;
+    proxy_ssl_verify {{ (metro_web_upstream_verify | default(true) | bool) | ternary('on', 'off') }};
+    proxy_ssl_trusted_certificate {{ metro_web_upstream_ca_cert | default('/etc/ssl/certs/ca-certificates.crt') }};
+  }
+
+  location ~* ^/(assets/|node_modules/|.*\.(bundle|js|mjs|css|map|json|png|jpg|jpeg|gif|svg|webp|ico|ttf|otf|woff|woff2)) {
+    proxy_pass {{ metro_web_upstream_scheme | default('http') }}://metro_web_upstream;
+
+    proxy_cache metro_cache;
+    proxy_cache_methods GET HEAD;
+    proxy_cache_bypass $http_cache_control $http_pragma;
+    proxy_no_cache $http_cache_control $http_pragma;
+    proxy_cache_valid 200 302 {{ metro_cache_valid_success | default('10m') }};
+    proxy_cache_valid 404 {{ metro_cache_valid_404 | default('1m') }};
+    add_header X-Cache-Status $upstream_cache_status always;
+
+    # Upstream TLS settings (used when scheme is https)
+    proxy_ssl_server_name on;
+    proxy_ssl_verify {{ (metro_web_upstream_verify | default(true) | bool) | ternary('on', 'off') }};
+    proxy_ssl_trusted_certificate {{ metro_web_upstream_ca_cert | default('/etc/ssl/certs/ca-certificates.crt') }};
+  }
 
   location / {
     proxy_pass {{ metro_web_upstream_scheme | default('http') }}://metro_web_upstream;
+
+    proxy_cache off;
+    add_header X-Cache-Status BYPASS always;
 
     # Upstream TLS settings (used when scheme is https)
     proxy_ssl_server_name on;
@@ -101,15 +125,38 @@ server {
   proxy_set_header Upgrade $http_upgrade;
   proxy_set_header Connection "upgrade";
 
-  proxy_cache metro_cache;
-  proxy_cache_bypass $http_cache_control $http_pragma;
-  proxy_no_cache $http_cache_control $http_pragma;
-  proxy_cache_valid 200 302 {{ metro_cache_valid_success | default('10m') }};
-  proxy_cache_valid 404 {{ metro_cache_valid_404 | default('1m') }};
-  add_header X-Cache-Status $upstream_cache_status;
+  location ~* ^/(hot|message)$ {
+    proxy_pass {{ metro_mobile_upstream_scheme | default('http') }}://metro_mobile_upstream;
+
+    proxy_cache off;
+    add_header X-Cache-Status BYPASS always;
+
+    proxy_ssl_server_name on;
+    proxy_ssl_verify {{ (metro_mobile_upstream_verify | default(true) | bool) | ternary('on', 'off') }};
+    proxy_ssl_trusted_certificate {{ metro_mobile_upstream_ca_cert | default('/etc/ssl/certs/ca-certificates.crt') }};
+  }
+
+  location ~* ^/(assets/|node_modules/|.*\.(bundle|js|mjs|css|map|json|png|jpg|jpeg|gif|svg|webp|ico|ttf|otf|woff|woff2)) {
+    proxy_pass {{ metro_mobile_upstream_scheme | default('http') }}://metro_mobile_upstream;
+
+    proxy_cache metro_cache;
+    proxy_cache_methods GET HEAD;
+    proxy_cache_bypass $http_cache_control $http_pragma;
+    proxy_no_cache $http_cache_control $http_pragma;
+    proxy_cache_valid 200 302 {{ metro_cache_valid_success | default('10m') }};
+    proxy_cache_valid 404 {{ metro_cache_valid_404 | default('1m') }};
+    add_header X-Cache-Status $upstream_cache_status always;
+
+    proxy_ssl_server_name on;
+    proxy_ssl_verify {{ (metro_mobile_upstream_verify | default(true) | bool) | ternary('on', 'off') }};
+    proxy_ssl_trusted_certificate {{ metro_mobile_upstream_ca_cert | default('/etc/ssl/certs/ca-certificates.crt') }};
+  }
 
   location / {
     proxy_pass {{ metro_mobile_upstream_scheme | default('http') }}://metro_mobile_upstream;
+
+    proxy_cache off;
+    add_header X-Cache-Status BYPASS always;
 
     proxy_ssl_server_name on;
     proxy_ssl_verify {{ (metro_mobile_upstream_verify | default(true) | bool) | ternary('on', 'off') }};

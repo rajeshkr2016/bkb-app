@@ -1,25 +1,27 @@
 # Metro bundler nginx variables
 
-metro_web_domain: rajeshkr.tplinkdns.com
-metro_mobile_domain: rajeshkr.tplinkdns.com
+metro_domain: example.local
+metro_web_domain: "{{ metro_domain }}"
+metro_mobile_domain: "{{ metro_domain }}"
 
-metro_web_upstream: 192.168.68.71:8081
-metro_mobile_upstream: 192.168.68.71:8081
+metro_upstream: 127.0.0.1:8081
+metro_web_upstream: "{{ metro_upstream }}"
+metro_mobile_upstream: "{{ metro_upstream }}"
 
 metro_web_upstream_scheme: http
 metro_mobile_upstream_scheme: http
 
-metro_ssl_cert_path: /etc/letsencrypt/live/rajeshkr.tplinkdns.com/fullchain.pem
-metro_ssl_key_path: /etc/letsencrypt/live/rajeshkr.tplinkdns.com/privkey.pem
+metro_ssl_cert_path: "/etc/letsencrypt/live/{{ metro_domain }}/fullchain.pem"
+metro_ssl_key_path: "/etc/letsencrypt/live/{{ metro_domain }}/privkey.pem"
 
 # Optional overrides
 metro_certbot_enabled: true
 metro_certbot_email: rajeshkr.mail2025@gmail.com
 # metro_self_signed_enabled: true
 # metro_self_signed_days: 365
-# metro_self_signed_subject: "/C=US/ST=CA/L=San Francisco/O=Metro/OU=Dev/CN=rajeshkr.tplinkdns.com"
+# metro_self_signed_subject: "/C=US/ST=CA/L=San Francisco/O=Metro/OU=Dev/CN=example.local"
 # metro_self_signed_sans:
-#   - rajeshkr.tplinkdns.com
+#   - example.local
 # metro_self_signed_renew_before: 2592000
 # metro_extra_server_names: ""
 # metro_web_upstream_verify: on
