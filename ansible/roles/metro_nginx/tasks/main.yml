@@ -1,0 +1,162 @@
+---
+- name: Ensure nginx is installed
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+
+- name: Ensure certbot and self-signed are not both enabled
+  ansible.builtin.assert:
+    that:
+      - not (metro_certbot_enabled and metro_self_signed_enabled)
+    fail_msg: "Enable only one: metro_certbot_enabled or metro_self_signed_enabled."
+
+- name: Check whether the configured TLS certificate already exists
+  ansible.builtin.stat:
+    path: "{{ metro_ssl_cert_path }}"
+  register: metro_ssl_cert_stat
+
+- name: Decide whether nginx should render HTTPS listeners
+  ansible.builtin.set_fact:
+    metro_https_enabled: "{{ metro_self_signed_enabled or metro_ssl_cert_stat.stat.exists or not metro_certbot_enabled }}"
+
+- name: Build unique certbot domain list
+  ansible.builtin.set_fact:
+    metro_certbot_domains: >-
+      {{
+        ([metro_web_domain, metro_mobile_domain] + (metro_extra_server_names | default('') | split()))
+        | reject('equalto', '')
+        | unique
+        | list
+      }}
+  when: metro_certbot_enabled
+
+- name: Build certbot domain arguments
+  ansible.builtin.set_fact:
+    metro_certbot_domain_args: "{{ metro_certbot_domains | map('regex_replace', '^(.*)$', '-d \\1') | join(' ') }}"
+  when: metro_certbot_enabled
+
+- name: Ensure certbot is installed (optional)
+  ansible.builtin.apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+    state: present
+    update_cache: true
+  when: metro_certbot_enabled
+
+- name: Ensure openssl is installed (for self-signed certs)
+  ansible.builtin.apt:
+    name: openssl
+    state: present
+    update_cache: true
+  when: metro_self_signed_enabled
+
+- name: Ensure Metro cache directory exists
+  ansible.builtin.file:
+    path: "{{ metro_cache_path }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Ensure TLS directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - /etc/ssl/certs
+    - /etc/ssl/private
+
+- name: Check existing self-signed cert validity (optional)
+  ansible.builtin.command: >-
+    openssl x509 -checkend {{ metro_self_signed_renew_before }} -noout
+    -in {{ metro_ssl_cert_path }}
+  register: metro_self_signed_check
+  failed_when: false
+  changed_when: false
+  when:
+    - metro_self_signed_enabled
+    - not metro_certbot_enabled
+
+- name: Build SAN string (optional)
+  ansible.builtin.set_fact:
+    metro_self_signed_san_string: >-
+      {{ metro_self_signed_sans | map('regex_replace', '^(.*)$', 'DNS:\\1') | join(',') }}
+  when:
+    - metro_self_signed_enabled
+    - not metro_certbot_enabled
+    - metro_self_signed_sans | length > 0
+
+- name: Generate self-signed certificate (optional)
+  ansible.builtin.command: >-
+    openssl req -x509 -nodes -newkey rsa:2048
+    -days {{ metro_self_signed_days }}
+    -keyout {{ metro_ssl_key_path }}
+    -out {{ metro_ssl_cert_path }}
+    -subj "{{ metro_self_signed_subject }}"
+    {% if metro_self_signed_sans | length > 0 %}-addext "subjectAltName = {{ metro_self_signed_san_string }}"{% endif %}
+  when:
+    - metro_self_signed_enabled
+    - not metro_certbot_enabled
+    - metro_self_signed_check.rc != 0
+
+- name: Install Metro nginx config
+  ansible.builtin.template:
+    src: nginx-metro-bundler.conf.j2
+    dest: /etc/nginx/sites-available/metro-bundler.conf
+    mode: "0644"
+  notify: Reload nginx
+
+- name: Enable Metro nginx config
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/metro-bundler.conf
+    dest: /etc/nginx/sites-enabled/metro-bundler.conf
+    state: link
+  notify: Reload nginx
+
+- name: Disable default nginx site if present
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload nginx
+
+- name: Test nginx configuration
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+- name: Activate bootstrap nginx config before certbot
+  ansible.builtin.meta: flush_handlers
+  when:
+    - metro_certbot_enabled
+    - not metro_https_enabled
+
+- name: Obtain/renew LetsEncrypt certs (optional)
+  ansible.builtin.command: >-
+    certbot certonly --nginx
+    -m {{ metro_certbot_email }}
+    --agree-tos
+    --no-eff-email
+    {{ metro_certbot_domain_args }}
+    --non-interactive
+  when: metro_certbot_enabled
+  notify: Reload nginx
+
+- name: Enable HTTPS config after LetsEncrypt issuance
+  ansible.builtin.set_fact:
+    metro_https_enabled: true
+  when: metro_certbot_enabled
+
+- name: Reinstall Metro nginx config with HTTPS enabled
+  ansible.builtin.template:
+    src: nginx-metro-bundler.conf.j2
+    dest: /etc/nginx/sites-available/metro-bundler.conf
+    mode: "0644"
+  when: metro_certbot_enabled
+  notify: Reload nginx
+
+- name: Retest nginx configuration after LetsEncrypt issuance
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  when: metro_certbot_enabled

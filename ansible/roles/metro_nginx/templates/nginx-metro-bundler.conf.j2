@@ -1,0 +1,130 @@
+# Nginx config for Metro bundler (web + mobile)
+# This file is meant to be included from the nginx http context
+
+# Rate limit zone (per client IP)
+limit_req_zone $binary_remote_addr zone=metro_req_limit:10m rate={{ metro_rate_limit | default('20r/s') }};
+
+# Cache path for Metro responses
+proxy_cache_path {{ metro_cache_path | default('/var/cache/nginx/metro') }}
+  levels=1:2
+  keys_zone=metro_cache:{{ metro_cache_zone_size | default('50m') }}
+  max_size={{ metro_cache_max_size | default('1g') }}
+  inactive={{ metro_cache_inactive | default('30m') }}
+  use_temp_path=off;
+
+{% if metro_https_enabled | bool %}
+# Web Metro bundler
+upstream metro_web_upstream {
+  server {{ metro_web_upstream }};
+  keepalive 16;
+}
+
+# Mobile Metro bundler
+upstream metro_mobile_upstream {
+  server {{ metro_mobile_upstream }};
+  keepalive 16;
+}
+
+# Redirect HTTP to HTTPS for both hosts
+server {
+  listen 80;
+  listen [::]:80;
+  server_name {{ metro_web_domain }} {{ metro_mobile_domain }}{% if metro_extra_server_names is defined %} {{ metro_extra_server_names }}{% endif %};
+
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+  server_name {{ metro_web_domain }}{% if metro_extra_server_names is defined %} {{ metro_extra_server_names }}{% endif %};
+
+  ssl_certificate {{ metro_ssl_cert_path }};
+  ssl_certificate_key {{ metro_ssl_key_path }};
+  ssl_session_cache shared:SSL:10m;
+  ssl_session_timeout 10m;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers off;
+
+  # Rate limiting
+  limit_req zone=metro_req_limit burst={{ metro_rate_limit_burst | default('40') }} nodelay;
+
+  # Basic proxy settings
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+
+  # Websocket support (Metro uses it for HMR)
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection "upgrade";
+
+  # Caching
+  proxy_cache metro_cache;
+  proxy_cache_bypass $http_cache_control $http_pragma;
+  proxy_no_cache $http_cache_control $http_pragma;
+  proxy_cache_valid 200 302 {{ metro_cache_valid_success | default('10m') }};
+  proxy_cache_valid 404 {{ metro_cache_valid_404 | default('1m') }};
+  add_header X-Cache-Status $upstream_cache_status;
+
+  location / {
+    proxy_pass {{ metro_web_upstream_scheme | default('http') }}://metro_web_upstream;
+
+    # Upstream TLS settings (used when scheme is https)
+    proxy_ssl_server_name on;
+    proxy_ssl_verify {{ (metro_web_upstream_verify | default(true) | bool) | ternary('on', 'off') }};
+    proxy_ssl_trusted_certificate {{ metro_web_upstream_ca_cert | default('/etc/ssl/certs/ca-certificates.crt') }};
+  }
+}
+
+server {
+  listen 443 ssl http2;
+  listen [::]:443 ssl http2;
+  server_name {{ metro_mobile_domain }}{% if metro_extra_server_names is defined %} {{ metro_extra_server_names }}{% endif %};
+
+  ssl_certificate {{ metro_ssl_cert_path }};
+  ssl_certificate_key {{ metro_ssl_key_path }};
+  ssl_session_cache shared:SSL:10m;
+  ssl_session_timeout 10m;
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_prefer_server_ciphers off;
+
+  limit_req zone=metro_req_limit burst={{ metro_rate_limit_burst | default('40') }} nodelay;
+
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+
+  proxy_http_version 1.1;
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection "upgrade";
+
+  proxy_cache metro_cache;
+  proxy_cache_bypass $http_cache_control $http_pragma;
+  proxy_no_cache $http_cache_control $http_pragma;
+  proxy_cache_valid 200 302 {{ metro_cache_valid_success | default('10m') }};
+  proxy_cache_valid 404 {{ metro_cache_valid_404 | default('1m') }};
+  add_header X-Cache-Status $upstream_cache_status;
+
+  location / {
+    proxy_pass {{ metro_mobile_upstream_scheme | default('http') }}://metro_mobile_upstream;
+
+    proxy_ssl_server_name on;
+    proxy_ssl_verify {{ (metro_mobile_upstream_verify | default(true) | bool) | ternary('on', 'off') }};
+    proxy_ssl_trusted_certificate {{ metro_mobile_upstream_ca_cert | default('/etc/ssl/certs/ca-certificates.crt') }};
+  }
+}
+{% else %}
+server {
+  listen 80;
+  listen [::]:80;
+  server_name {{ metro_web_domain }} {{ metro_mobile_domain }}{% if metro_extra_server_names is defined %} {{ metro_extra_server_names }}{% endif %};
+
+  location / {
+    default_type text/plain;
+    return 200 "certbot bootstrap\n";
+  }
+}
+{% endif %}

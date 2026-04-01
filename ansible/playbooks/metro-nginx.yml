@@ -1,0 +1,56 @@
+---
+- name: Configure nginx for Metro bundlers
+  hosts: metro_bundlers
+  become: true
+  vars_files:
+    - ../group_vars/all.yml
+
+  vars:
+    metro_config_name: metro-bundler.conf
+    metro_config_path: /etc/nginx/sites-available/{{ metro_config_name }}
+    metro_config_link: /etc/nginx/sites-enabled/{{ metro_config_name }}
+
+  tasks:
+    - name: Ensure nginx is installed
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Ensure Metro cache directory exists
+      ansible.builtin.file:
+        path: "{{ metro_cache_path | default('/var/cache/nginx/metro') }}"
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: "0755"
+
+    - name: Install Metro nginx config
+      ansible.builtin.template:
+        src: nginx-metro-bundler.conf.j2
+        dest: "{{ metro_config_path }}"
+        mode: "0644"
+      notify: Reload nginx
+
+    - name: Enable Metro nginx config
+      ansible.builtin.file:
+        src: "{{ metro_config_path }}"
+        dest: "{{ metro_config_link }}"
+        state: link
+      notify: Reload nginx
+
+    - name: Disable default nginx site if present
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+      notify: Reload nginx
+
+    - name: Test nginx configuration
+      ansible.builtin.command: nginx -t
+      changed_when: false
+
+  handlers:
+    - name: Reload nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded

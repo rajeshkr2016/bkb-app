@@ -1,0 +1,31 @@
+---
+metro_rate_limit: 20r/s
+metro_rate_limit_burst: 40
+metro_cache_path: /var/cache/nginx/metro
+metro_cache_zone_size: 50m
+metro_cache_max_size: 1g
+metro_cache_inactive: 30m
+metro_cache_valid_success: 10m
+metro_cache_valid_404: 1m
+
+# LetsEncrypt defaults (set to true to enable)
+metro_certbot_enabled: false
+metro_certbot_email: ops@example.com
+
+# Self-signed cert defaults (set to true to enable)
+metro_self_signed_enabled: false
+metro_self_signed_days: 365
+metro_self_signed_subject: "/C=US/ST=CA/L=San Francisco/O=Metro/OU=Dev/CN=localhost"
+metro_self_signed_sans: []
+metro_self_signed_renew_before: 2592000
+
+# Upstream TLS defaults (set scheme to https to enable)
+metro_web_upstream_scheme: http
+metro_mobile_upstream_scheme: http
+metro_web_upstream_verify: on
+metro_mobile_upstream_verify: on
+metro_web_upstream_ca_cert: /etc/ssl/certs/ca-certificates.crt
+metro_mobile_upstream_ca_cert: /etc/ssl/certs/ca-certificates.crt
+
+# Extra public domain names (space-separated)
+metro_extra_server_names: ""

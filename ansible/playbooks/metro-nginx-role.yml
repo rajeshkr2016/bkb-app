@@ -1,0 +1,8 @@
+---
+- name: Configure nginx for Metro bundlers (role)
+  hosts: metro_bundlers
+  become: true
+  vars_files:
+    - ../group_vars/all.yml
+  roles:
+    - metro_nginx
