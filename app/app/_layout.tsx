@@ -14,19 +14,22 @@ function RootNavigator() {
     if (loading) return;
     if (!profileChecked && session) return;
     const inAuthGroup = segments[0] === "(auth)";
-
     const inLandingGroup = segments[0] === "(landing)";
+    const inPublicGroup =
+      segments[0] === "events" || segments[0] === "hiking";
 
-    if (!session && !inAuthGroup && !inLandingGroup) {
+    if (!session && !inAuthGroup && !inLandingGroup && !inPublicGroup) {
       router.replace("/(landing)");
     } else if (session && inAuthGroup) {
+      // Logged in user on auth screens → send to app
       if (profileComplete) {
         router.replace("/(tabs)/discover");
       } else {
         router.replace("/(tabs)/profile");
       }
-    } else if (session && !inAuthGroup && profileChecked && !profileComplete) {
-      if (segments[1] !== "profile") {
+    } else if (session && !inAuthGroup && !inLandingGroup && !inPublicGroup && profileChecked && !profileComplete) {
+      // Logged in but profile incomplete → only redirect if inside (tabs) and not on profile
+      if (segments[0] === "(tabs)" && (segments as string[])[1] !== "profile") {
         router.replace("/(tabs)/profile");
       }
     }
