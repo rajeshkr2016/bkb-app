@@ -14,6 +14,7 @@ set -euo pipefail
 
 MODE="${1:---lan}"
 PROJECT_DIR="/opt/projects/bkb-app"
+ENV_FILE="$PROJECT_DIR/.env.local"
 
 echo "========================================="
 echo " BKB Community — Start Expo Dev Server"
@@ -54,28 +55,21 @@ else
   supabase start
 fi
 
-# --- Update supabase.ts with server IP ---
+# --- Load Expo env config ---
 echo ""
 echo "[2/3] Checking app config..."
 
-SERVER_IP=$(hostname -I | awk '{print $1}')
-SUPABASE_FILE="$PROJECT_DIR/app/src/lib/supabase.ts"
-
-CURRENT_IP=$(grep 'const LOCAL_IP' "$SUPABASE_FILE" | grep -oP '"\K[^"]+')
-
-if [ "$CURRENT_IP" != "$SERVER_IP" ]; then
-  echo "  WARNING: supabase.ts has LOCAL_IP=\"$CURRENT_IP\""
-  echo "           Server LAN IP is: $SERVER_IP"
-  echo ""
-  read -p "  Update LOCAL_IP to $SERVER_IP? (y/N) " -n 1 -r
-  echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    sed -i "s|const LOCAL_IP = \".*\"|const LOCAL_IP = \"$SERVER_IP\"|" "$SUPABASE_FILE"
-    echo "  Updated LOCAL_IP to $SERVER_IP"
-  fi
+if [ -f "$ENV_FILE" ]; then
+  set -a
+  . "$ENV_FILE"
+  set +a
+  echo "  Loaded env vars from $ENV_FILE"
 else
-  echo "  LOCAL_IP matches server IP: $SERVER_IP"
+  echo "  No $ENV_FILE found. Using shell defaults only."
 fi
+
+echo "  EXPO_PUBLIC_LOCAL_IP=${EXPO_PUBLIC_LOCAL_IP:-<unset>}"
+echo "  EXPO_PUBLIC_SUPABASE_URL=${EXPO_PUBLIC_SUPABASE_URL:-<auto>}"
 
 # --- Kill existing Expo process ---
 if lsof -ti:8081 &>/dev/null; then

@@ -1,0 +1,59 @@
+---
+- name: Restart Expo dev server
+  hosts: metro_bundlers
+  become: false
+  vars:
+    remote_project_dir: /opt/projects/bkb-app
+    expo_mode: --lan
+    expo_log_file: /tmp/bkb-expo.log
+
+  tasks:
+    - name: Ensure remote Expo startup script exists
+      ansible.builtin.stat:
+        path: "{{ remote_project_dir }}/scripts/ubuntu/04-start-expo.sh"
+      register: expo_start_script
+
+    - name: Fail if Expo startup script is missing
+      ansible.builtin.assert:
+        that:
+          - expo_start_script.stat.exists
+        fail_msg: >-
+          Missing {{ remote_project_dir }}/scripts/ubuntu/04-start-expo.sh on the remote host.
+
+    - name: Stop any existing Expo process on port 8081
+      ansible.builtin.shell: |
+        if lsof -ti:8081 >/dev/null 2>&1; then
+          lsof -ti:8081 | xargs kill -9
+        fi
+      args:
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Start Expo in the background
+      ansible.builtin.shell: >-
+        nohup bash {{ remote_project_dir }}/scripts/ubuntu/04-start-expo.sh {{ expo_mode }}
+        > {{ expo_log_file }} 2>&1 < /dev/null &
+      args:
+        chdir: "{{ remote_project_dir }}"
+        executable: /bin/bash
+      changed_when: true
+
+    - name: Wait for Expo to start listening on port 8081
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 8081
+        timeout: 120
+        delay: 2
+        state: started
+
+    - name: Show Expo log tail
+      ansible.builtin.command: tail -n 40 {{ expo_log_file }}
+      register: expo_log_tail
+      changed_when: false
+
+    - name: Report Expo restart result
+      ansible.builtin.debug:
+        msg:
+          - "Expo restarted on {{ inventory_hostname }} in mode {{ expo_mode }}"
+          - "Log file: {{ expo_log_file }}"
+          - "{{ expo_log_tail.stdout }}"

@@ -60,6 +60,16 @@ server {
   proxy_set_header Upgrade $http_upgrade;
   proxy_set_header Connection "upgrade";
 
+  location ~ ^/(auth|rest|realtime|storage|functions|graphql)/v1(?:/|$) {
+    proxy_pass http://127.0.0.1:54321;
+
+    proxy_cache off;
+    add_header X-Cache-Status BYPASS always;
+
+    proxy_read_timeout 3600;
+    proxy_send_timeout 3600;
+  }
+
   location ~* ^/(hot|message)$ {
     proxy_pass {{ metro_web_upstream_scheme | default('http') }}://metro_web_upstream;
 
@@ -124,6 +134,16 @@ server {
   proxy_http_version 1.1;
   proxy_set_header Upgrade $http_upgrade;
   proxy_set_header Connection "upgrade";
+
+  location ~ ^/(auth|rest|realtime|storage|functions|graphql)/v1(?:/|$) {
+    proxy_pass http://127.0.0.1:54321;
+
+    proxy_cache off;
+    add_header X-Cache-Status BYPASS always;
+
+    proxy_read_timeout 3600;
+    proxy_send_timeout 3600;
+  }
 
   location ~* ^/(hot|message)$ {
     proxy_pass {{ metro_mobile_upstream_scheme | default('http') }}://metro_mobile_upstream;

@@ -5,6 +5,14 @@
   vars_files:
     - ../group_vars/all.yml
   pre_tasks:
+    - name: Check whether repo .env.local exists on the control machine
+      ansible.builtin.stat:
+        path: "{{ playbook_dir }}/../../.env.local"
+        checksum_algorithm: sha256
+      delegate_to: localhost
+      become: false
+      register: repo_env_local_stat
+
     - name: Read Metro env overrides from repo .env.local on the control machine
       ansible.builtin.shell: |
         if [ -f "{{ playbook_dir }}/../../.env.local" ]; then
@@ -43,8 +51,44 @@
     metro_config_name: metro-bundler.conf
     metro_config_path: /etc/nginx/sites-available/{{ metro_config_name }}
     metro_config_link: /etc/nginx/sites-enabled/{{ metro_config_name }}
+    project_root: "{{ playbook_dir }}/../.."
+    remote_project_dir: /opt/projects/bkb-app
 
   tasks:
+    - name: Ensure remote project directory exists
+      ansible.builtin.file:
+        path: "{{ remote_project_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Copy repo .env.local to remote project directory when present
+      ansible.builtin.copy:
+        src: "{{ project_root }}/.env.local"
+        dest: "{{ remote_project_dir }}/.env.local"
+        mode: "0600"
+      when: repo_env_local_stat.stat.exists
+
+    - name: Check remote .env.local checksum after copy
+      ansible.builtin.stat:
+        path: "{{ remote_project_dir }}/.env.local"
+        checksum_algorithm: sha256
+      register: remote_env_local_stat
+      when: repo_env_local_stat.stat.exists
+
+    - name: Verify remote .env.local matches local file
+      ansible.builtin.assert:
+        that:
+          - remote_env_local_stat.stat.exists
+          - remote_env_local_stat.stat.checksum == repo_env_local_stat.stat.checksum
+        fail_msg: >-
+          Remote .env.local checksum does not match local file.
+          local={{ repo_env_local_stat.stat.checksum | default('missing') }}
+          remote={{ remote_env_local_stat.stat.checksum | default('missing') }}
+        success_msg: >-
+          Verified /opt/projects/bkb-app/.env.local checksum matches local file:
+          {{ remote_env_local_stat.stat.checksum }}
+      when: repo_env_local_stat.stat.exists
+
     - name: Ensure nginx is installed
       ansible.builtin.apt:
         name: nginx
