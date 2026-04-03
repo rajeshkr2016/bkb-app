@@ -1,5 +1,7 @@
-const MEETUP_GROUP_SLUG = "break-ke-baad-bkb-divorced-indians";
-const MEETUP_EVENTS_URL = `https://www.meetup.com/${MEETUP_GROUP_SLUG}/events/`;
+const SUPABASE_URL =
+  process.env.EXPO_PUBLIC_SUPABASE_URL ?? "https://ywleqlcyxtalbxejniov.supabase.co";
+const SUPABASE_ANON_KEY =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 export type MeetupEvent = {
   id: string;
@@ -28,59 +30,26 @@ type FetchResult = {
 };
 
 export async function fetchMeetupEvents(): Promise<FetchResult> {
-  const res = await fetch(MEETUP_EVENTS_URL);
-  if (!res.ok) throw new Error(`Meetup fetch failed: ${res.status}`);
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/meetup-events`, {
+    headers: {
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      apikey: SUPABASE_ANON_KEY,
+    },
+  });
 
-  const html = await res.text();
-
-  const match = html.match(
-    /__NEXT_DATA__"\s*type="application\/json">(.+?)<\/script>/
-  );
-  if (!match) throw new Error("Could not find __NEXT_DATA__ in Meetup page");
-
-  const data = JSON.parse(match[1]);
-  const apollo = data?.props?.pageProps?.__APOLLO_STATE__;
-  if (!apollo) throw new Error("Could not find Apollo state in Meetup data");
-
-  // Extract events
-  const events: MeetupEvent[] = Object.entries(apollo)
-    .filter(([key]) => key.startsWith("Event:"))
-    .map(([, value]: [string, any]) => ({
-      id: value.id,
-      title: value.title,
-      dateTime: value.dateTime,
-      endTime: value.endTime ?? null,
-      going: value.going?.totalCount ?? 0,
-      maxTickets: value.maxTickets ?? 0,
-      eventType: value.eventType ?? "PHYSICAL",
-      eventUrl: value.eventUrl ?? "",
-      description: value.description ?? "",
-      fee: value.feeSettings?.amount
-        ? `$${value.feeSettings.amount}`
-        : null,
-      status: value.status ?? "ACTIVE",
-    }))
-    .sort(
-      (a, b) =>
-        new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime()
-    );
-
-  // Extract group info
-  let group: MeetupGroup | null = null;
-  const groupEntry = Object.entries(apollo).find(([key]) =>
-    key.startsWith("Group:")
-  );
-  if (groupEntry) {
-    const g = groupEntry[1] as any;
-    group = {
-      name: g.name ?? MEETUP_GROUP_SLUG,
-      memberCount: g.stats?.memberCounts?.all ?? 0,
-      rating: g.stats?.eventRatings?.average ?? 0,
-      totalRatings: g.stats?.eventRatings?.total ?? 0,
-    };
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Fetch failed (${res.status}): ${body}`);
   }
 
-  return { events, group };
+  const data = await res.json();
+
+  if (data.error) throw new Error(data.error);
+
+  return {
+    events: data.events ?? [],
+    group: data.group ?? null,
+  };
 }
 
 export function formatEventDate(dateTime: string): { month: string; day: string; full: string } {
