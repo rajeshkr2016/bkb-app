@@ -36,10 +36,13 @@ jobs:
       - name: Create .env for Expo build
         working-directory: app
         run: |
-          cat <<EOF > .env.local
-          EXPO_PUBLIC_SUPABASE_URL=https://ywleqlcyxtalbxejniov.supabase.co
-          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
-          EOF
+          echo "EXPO_PUBLIC_SUPABASE_URL=https://ywleqlcyxtalbxejniov.supabase.co" > .env.local
+          echo "EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.local
+          echo "URL=$(cut -c1-40 <<< "$EXPO_PUBLIC_SUPABASE_URL")..."
+          echo "KEY=$(echo "$EXPO_PUBLIC_SUPABASE_ANON_KEY" | cut -c1-10)..."
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: https://ywleqlcyxtalbxejniov.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
 
       - name: Export static web build
         working-directory: app
