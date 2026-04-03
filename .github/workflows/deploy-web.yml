@@ -33,11 +33,16 @@ jobs:
         working-directory: app
         run: npm ci
 
+      - name: Create .env for Expo build
+        working-directory: app
+        run: |
+          cat <<EOF > .env.local
+          EXPO_PUBLIC_SUPABASE_URL=https://ywleqlcyxtalbxejniov.supabase.co
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EOF
+
       - name: Export static web build
         working-directory: app
-        env:
-          EXPO_PUBLIC_SUPABASE_URL: https://ywleqlcyxtalbxejniov.supabase.co
-          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
         run: npx expo export --platform web
 
       - name: Upload Pages artifact
