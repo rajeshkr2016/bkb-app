@@ -27,7 +27,13 @@ export function useAuth() {
   const signUp = async (email: string, password: string) => {
     signingUp.current = true;
     try {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: process.env.EXPO_PUBLIC_SITE_URL,
+        },
+      });
       // Supabase returns a user with empty identities (instead of an error)
       // when the email is already registered — detect this as a duplicate
       if (!error && data?.user?.identities?.length === 0) {
