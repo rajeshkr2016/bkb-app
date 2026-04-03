@@ -51,3 +51,11 @@ Test with Expo Go on your phone. Update `LOCAL_IP` in `app/src/lib/supabase.ts` 
 - [docs/testing.md](docs/testing.md) — Testing guide with test cases and DB verification
 - [docs/ubuntu-server-setup.md](docs/ubuntu-server-setup.md) — Ubuntu server deployment guide
 - [scripts/ubuntu/](scripts/ubuntu/) — Setup scripts for Ubuntu server deployment
+
+
+eas init --id xxx
+eas.json is not valid.
+- "submit.production.ios.appleId" is not allowed to be empty
+- "submit.production.ios.ascAppId" is not allowed to be empty
+- "submit.production.ios.appleTeamId" is not allowed to be empty
+    Error: project:init command failed.

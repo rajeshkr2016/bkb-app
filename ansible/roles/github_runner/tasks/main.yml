@@ -1,0 +1,123 @@
+---
+- name: Validate runner token is provided
+  ansible.builtin.assert:
+    that:
+      - github_runner_token | length > 0
+    fail_msg: >
+      github_runner_token must be set. Generate one at
+      https://github.com/{{ github_runner_repo }}/settings/actions/runners/new
+      and pass via --extra-vars 'github_runner_token=XXXXX'
+
+- name: Install runner dependencies
+  ansible.builtin.apt:
+    name:
+      - curl
+      - tar
+      - jq
+      - git
+      - unzip
+      - libicu-dev
+      - libssl-dev
+    state: present
+    update_cache: true
+
+- name: Install Node.js {{ nodejs_major_version }}.x
+  block:
+    - name: Add NodeSource GPG key
+      ansible.builtin.shell: |
+        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+          | gpg --dearmor -o /usr/share/keyrings/nodesource.gpg
+      args:
+        creates: /usr/share/keyrings/nodesource.gpg
+
+    - name: Add NodeSource repository
+      ansible.builtin.copy:
+        content: |
+          deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_{{ nodejs_major_version }}.x nodistro main
+        dest: /etc/apt/sources.list.d/nodesource.list
+        mode: "0644"
+
+    - name: Install Node.js
+      ansible.builtin.apt:
+        name: nodejs
+        state: present
+        update_cache: true
+
+- name: Install Supabase CLI
+  ansible.builtin.shell: |
+    curl -fsSL https://github.com/supabase/cli/releases/download/v{{ supabase_cli_version }}/supabase_{{ supabase_cli_version }}_linux_amd64.deb -o /tmp/supabase.deb
+    dpkg -i /tmp/supabase.deb
+    rm -f /tmp/supabase.deb
+  args:
+    creates: /usr/bin/supabase
+
+- name: Create runner system user
+  ansible.builtin.user:
+    name: "{{ github_runner_user }}"
+    system: true
+    shell: /bin/bash
+    home: "/home/{{ github_runner_user }}"
+    create_home: true
+
+- name: Create runner installation directory
+  ansible.builtin.file:
+    path: "{{ github_runner_dir }}"
+    state: directory
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_user }}"
+    mode: "0755"
+
+- name: Download GitHub Actions runner
+  ansible.builtin.get_url:
+    url: "https://github.com/actions/runner/releases/download/v{{ github_runner_version }}/actions-runner-linux-{{ github_runner_arch }}-{{ github_runner_version }}.tar.gz"
+    dest: "/tmp/actions-runner.tar.gz"
+    mode: "0644"
+
+- name: Extract runner archive
+  ansible.builtin.unarchive:
+    src: "/tmp/actions-runner.tar.gz"
+    dest: "{{ github_runner_dir }}"
+    remote_src: true
+    owner: "{{ github_runner_user }}"
+    group: "{{ github_runner_user }}"
+    creates: "{{ github_runner_dir }}/config.sh"
+
+- name: Check if runner is already configured
+  ansible.builtin.stat:
+    path: "{{ github_runner_dir }}/.runner"
+  register: runner_configured
+
+- name: Configure the runner
+  ansible.builtin.command: >
+    ./config.sh
+    --url https://github.com/{{ github_runner_repo }}
+    --token {{ github_runner_token }}
+    --name {{ github_runner_name }}
+    --labels {{ github_runner_labels }}
+    --work {{ github_runner_work_dir }}
+    --unattended
+    --replace
+  args:
+    chdir: "{{ github_runner_dir }}"
+  become: true
+  become_user: "{{ github_runner_user }}"
+  when: not runner_configured.stat.exists
+
+- name: Install runner systemd service
+  ansible.builtin.template:
+    src: github-runner.service.j2
+    dest: /etc/systemd/system/github-runner.service
+    mode: "0644"
+  notify: Restart github-runner
+
+- name: Enable and start the runner service
+  ansible.builtin.systemd:
+    name: github-runner
+    enabled: true
+    state: started
+    daemon_reload: true
+
+- name: Clean up downloaded archive
+  ansible.builtin.file:
+    path: /tmp/actions-runner.tar.gz
+    state: absent

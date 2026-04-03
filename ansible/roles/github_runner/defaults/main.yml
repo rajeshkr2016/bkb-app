@@ -1,0 +1,34 @@
+---
+# GitHub Actions Runner version
+github_runner_version: "2.322.0"
+
+# Runner architecture (x64, arm, arm64)
+github_runner_arch: "x64"
+
+# GitHub repository for the runner to register with
+github_runner_repo: "rajeshkr2016/bkb-app"
+
+# Runner name (defaults to hostname)
+github_runner_name: "{{ ansible_hostname }}"
+
+# Runner labels
+github_runner_labels: "self-hosted,linux,ubuntu,supabase"
+
+# Runner work directory
+github_runner_work_dir: "_work"
+
+# System user that runs the runner
+github_runner_user: "github-runner"
+
+# Installation directory
+github_runner_dir: "/opt/actions-runner"
+
+# GitHub Runner registration token (MUST be provided at runtime via --extra-vars or vault)
+# Generate at: https://github.com/<owner>/<repo>/settings/actions/runners/new
+github_runner_token: ""
+
+# Supabase CLI version to install on the runner
+supabase_cli_version: "2.20.0"
+
+# Node.js major version (for Expo/app builds if needed)
+nodejs_major_version: "20"

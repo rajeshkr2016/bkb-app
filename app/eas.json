@@ -12,6 +12,9 @@
     },
     "preview": {
       "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
       "ios": {
         "buildConfiguration": "Release"
       }
@@ -20,15 +23,6 @@
       "distribution": "store",
       "ios": {
         "buildConfiguration": "Release"
-      }
-    }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "",
-        "ascAppId": "",
-        "appleTeamId": ""
       }
     }
   }
