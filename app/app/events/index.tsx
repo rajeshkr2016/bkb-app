@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,261 +7,21 @@ import {
   ScrollView,
   SafeAreaView,
   Linking,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
 import CommunityNav from "../../src/components/CommunityNav";
-
-type EventItem = {
-  id: string;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  type: "physical" | "online";
-  attendees: number;
-  maxCapacity?: number;
-  fee?: string;
-  description: string;
-  tags: string[];
-};
+import {
+  fetchMeetupEvents,
+  formatEventDate,
+  formatEventTime,
+  MeetupEvent,
+  MeetupGroup,
+} from "../../src/lib/meetup";
 
 const MEETUP_URL =
   "https://www.meetup.com/break-ke-baad-bkb-divorced-indians/events/";
-
-const EVENTS: EventItem[] = [
-  {
-    id: "1",
-    title: "BKB TriValley Mid Week Meetup",
-    date: "Apr 1, 2026",
-    time: "6:30 PM",
-    location: "TriValley, CA",
-    type: "physical",
-    attendees: 8,
-    description: "Weekly series until June 24, 2026. Casual mid-week hangout.",
-    tags: ["Weekly", "Casual"],
-  },
-  {
-    id: "2",
-    title: "Hookah and the Art of Chilling at Pasha",
-    date: "Apr 2, 2026",
-    time: "7:00 PM",
-    location: "Redwood City, CA",
-    type: "physical",
-    attendees: 30,
-    maxCapacity: 30,
-    description: "Relax and unwind with hookah and great company.",
-    tags: ["Nightlife", "Social"],
-  },
-  {
-    id: "3",
-    title: "TGIF House of Raha Fremont Dinner",
-    date: "Apr 3, 2026",
-    time: "7:30 PM",
-    location: "Fremont, CA",
-    type: "physical",
-    attendees: 5,
-    description: "Friday dinner at House of Raha to kick off the weekend.",
-    tags: ["Dinner", "TGIF"],
-  },
-  {
-    id: "4",
-    title: "Rancho PGE Hike + Amber India Lunch",
-    date: "Apr 4-5, 2026",
-    time: "8:00 AM",
-    location: "Rancho, CA",
-    type: "physical",
-    attendees: 3,
-    description: "Multi-day hike followed by lunch at Amber India.",
-    tags: ["Hiking", "Food"],
-  },
-  {
-    id: "5",
-    title: "Veganism 101 Discussion",
-    date: "Apr 4, 2026",
-    time: "1:00 PM",
-    location: "Online",
-    type: "online",
-    attendees: 20,
-    maxCapacity: 24,
-    description: "Learn about the basics of veganism and plant-based living.",
-    tags: ["Online", "Health"],
-  },
-  {
-    id: "6",
-    title: "Hanuman Jayanti Pink Full Moon Awakening",
-    date: "Apr 4, 2026",
-    time: "5:45 PM",
-    location: "Bay Area, CA",
-    type: "physical",
-    attendees: 17,
-    maxCapacity: 30,
-    description: "Spiritual gathering to celebrate Hanuman Jayanti under the pink full moon.",
-    tags: ["Spiritual", "Cultural"],
-  },
-  {
-    id: "7",
-    title: "Saturday Night Bowling Dinner & Drinks",
-    date: "Apr 4, 2026",
-    time: "7:00 PM",
-    location: "Milpitas, CA",
-    type: "physical",
-    attendees: 9,
-    maxCapacity: 20,
-    description: "Bowling, dinner and drinks — a fun Saturday night out!",
-    tags: ["Bowling", "Nightlife"],
-  },
-  {
-    id: "8",
-    title: "Escape Room",
-    date: "Apr 9, 2026",
-    time: "7:15 PM",
-    location: "Bay Area, CA",
-    type: "physical",
-    attendees: 4,
-    fee: "$49.99",
-    description: "Team up and solve puzzles to escape!",
-    tags: ["Adventure", "Paid"],
-  },
-  {
-    id: "9",
-    title: "SWAGAT New Members Welcome Event",
-    date: "Apr 11, 2026",
-    time: "7:00 PM",
-    location: "Bay Area, CA",
-    type: "physical",
-    attendees: 59,
-    maxCapacity: 120,
-    description: "Welcome event for new BKB members. Meet the community!",
-    tags: ["Welcome", "Social"],
-  },
-  {
-    id: "10",
-    title: "Easter Egg Hunt for Kids",
-    date: "Apr 12, 2026",
-    time: "2:00 PM",
-    location: "Bay Area, CA",
-    type: "physical",
-    attendees: 51,
-    description: "Family-friendly Easter egg hunt for kids of all ages.",
-    tags: ["Family", "Kids"],
-  },
-  {
-    id: "11",
-    title: "Oakland Zoo Trip with Kids",
-    date: "Apr 18, 2026",
-    time: "10:00 AM",
-    location: "Oakland, CA",
-    type: "physical",
-    attendees: 10,
-    maxCapacity: 40,
-    description: "Fun day at the Oakland Zoo with kids and families.",
-    tags: ["Family", "Kids", "Outdoors"],
-  },
-  {
-    id: "12",
-    title: "Mini-Golf @ Emerald Hills",
-    date: "Apr 19, 2026",
-    time: "1:30 PM",
-    location: "San Jose, CA",
-    type: "physical",
-    attendees: 7,
-    description: "Casual mini-golf afternoon at Emerald Hills.",
-    tags: ["Sports", "Casual"],
-  },
-  {
-    id: "13",
-    title: "Las Vegas 2026 Edition",
-    date: "Apr 23-26, 2026",
-    time: "All Day",
-    location: "Las Vegas, NV",
-    type: "physical",
-    attendees: 46,
-    maxCapacity: 100,
-    description: "Multi-day trip to Las Vegas! Shows, dining, and fun.",
-    tags: ["Trip", "Multi-day"],
-  },
-  {
-    id: "14",
-    title: "DJ Chetas in San Francisco",
-    date: "Apr 24, 2026",
-    time: "10:00 PM",
-    location: "San Francisco, CA",
-    type: "physical",
-    attendees: 17,
-    description: "Bollywood night with DJ Chetas live in SF!",
-    tags: ["Nightlife", "Bollywood"],
-  },
-  {
-    id: "15",
-    title: "Mother's Day 2026 Celebrations",
-    date: "May 9, 2026",
-    time: "12:00 PM",
-    location: "Bay Area, CA",
-    type: "physical",
-    attendees: 50,
-    maxCapacity: 50,
-    description: "Special celebration honoring all the amazing moms in BKB.",
-    tags: ["Celebration", "Special"],
-  },
-  {
-    id: "16",
-    title: "Maharashtra Festival",
-    date: "May 16, 2026",
-    time: "12:00 PM",
-    location: "Bay Area, CA",
-    type: "physical",
-    attendees: 75,
-    maxCapacity: 75,
-    description: "Member-exclusive Maharashtra cultural festival.",
-    tags: ["Cultural", "Festival"],
-  },
-  {
-    id: "17",
-    title: "Master Chef Competition",
-    date: "May 16, 2026",
-    time: "6:00 PM",
-    location: "Bay Area, CA",
-    type: "physical",
-    attendees: 30,
-    description: "Show off your cooking skills! BKB Master Chef competition.",
-    tags: ["Cooking", "Competition"],
-  },
-  {
-    id: "18",
-    title: "White Water Rafting & River Camping",
-    date: "May 23-25, 2026",
-    time: "All Day",
-    location: "California",
-    type: "physical",
-    attendees: 33,
-    description: "Kids-friendly adventure — white water rafting and riverside camping.",
-    tags: ["Adventure", "Family", "Multi-day"],
-  },
-  {
-    id: "19",
-    title: "Patiala Peg",
-    date: "May 23, 2026",
-    time: "7:00 PM",
-    location: "Bay Area, CA",
-    type: "physical",
-    attendees: 40,
-    maxCapacity: 40,
-    description: "An evening of drinks, music, and desi vibes.",
-    tags: ["Social", "Nightlife"],
-  },
-  {
-    id: "20",
-    title: "Memorial Day Dinner Party",
-    date: "May 24, 2026",
-    time: "7:30 PM",
-    location: "Bay Area, CA",
-    type: "physical",
-    attendees: 35,
-    maxCapacity: 35,
-    description: "Memorial Day weekend dinner party with the BKB family.",
-    tags: ["Dinner", "Holiday"],
-  },
-];
 
 const TAG_FILTERS = [
   "All",
@@ -275,48 +35,91 @@ const TAG_FILTERS = [
   "Food",
 ];
 
+function inferTags(event: MeetupEvent): string[] {
+  const text = `${event.title} ${event.description}`.toLowerCase();
+  const tags: string[] = [];
+  if (text.includes("hike") || text.includes("hiking") || text.includes("trail")) tags.push("Hiking");
+  if (text.includes("dinner") || text.includes("lunch") || text.includes("food") || text.includes("chef")) tags.push("Food");
+  if (text.includes("bowl") || text.includes("golf") || text.includes("sport")) tags.push("Sports");
+  if (text.includes("kid") || text.includes("family") || text.includes("zoo") || text.includes("easter")) tags.push("Family");
+  if (text.includes("night") || text.includes("hookah") || text.includes("drink") || text.includes("dj") || text.includes("peg")) tags.push("Nightlife");
+  if (text.includes("festival") || text.includes("cultural") || text.includes("jayanti") || text.includes("maharashtra")) tags.push("Cultural");
+  if (text.includes("escape") || text.includes("rafting") || text.includes("adventure") || text.includes("vegas")) tags.push("Adventure");
+  if (event.eventType === "ONLINE") tags.push("Online");
+  if (tags.length === 0) tags.push("Social");
+  return tags;
+}
+
 export default function EventsScreen() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState("All");
+  const [events, setEvents] = useState<(MeetupEvent & { tags: string[] })[]>([]);
+  const [group, setGroup] = useState<MeetupGroup | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadEvents = useCallback(async () => {
+    try {
+      setError(null);
+      const result = await fetchMeetupEvents();
+      const tagged = result.events.map((e) => ({ ...e, tags: inferTags(e) }));
+      setEvents(tagged);
+      setGroup(result.group);
+    } catch (err: any) {
+      setError(err.message || "Failed to load events");
+    }
+  }, []);
+
+  useEffect(() => {
+    loadEvents().finally(() => setLoading(false));
+  }, [loadEvents]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadEvents();
+    setRefreshing(false);
+  }, [loadEvents]);
 
   const filtered =
     activeFilter === "All"
-      ? EVENTS
-      : EVENTS.filter((e) => e.tags.includes(activeFilter));
-
-  const handleBack = () => {
-    router.replace("/(landing)");
-  };
+      ? events
+      : events.filter((e) => e.tags.includes(activeFilter));
 
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.replace("/(landing)")} style={styles.backButton}>
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>BKB Events</Text>
-        <TouchableOpacity
-          onPress={() => Linking.openURL(MEETUP_URL)}
-          style={styles.meetupButton}
-        >
-          <Text style={styles.meetupText}>Meetup</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity onPress={onRefresh} style={styles.refreshButton}>
+            <Text style={styles.refreshText}>Refresh</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => Linking.openURL(MEETUP_URL)}
+            style={styles.meetupButton}
+          >
+            <Text style={styles.meetupText}>Meetup</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Group info */}
-      <View style={styles.groupInfo}>
-        <Text style={styles.groupName}>
-          Break Ke Baad - Global Indian Divorced Singles
-        </Text>
-        <View style={styles.groupStats}>
-          <Text style={styles.statText}>2,279 members</Text>
-          <Text style={styles.statDot}> · </Text>
-          <Text style={styles.statText}>4.8 rating</Text>
-          <Text style={styles.statDot}> · </Text>
-          <Text style={styles.statText}>Fremont, CA</Text>
+      {group && (
+        <View style={styles.groupInfo}>
+          <Text style={styles.groupName}>{group.name}</Text>
+          <View style={styles.groupStats}>
+            <Text style={styles.statText}>
+              {group.memberCount.toLocaleString()} members
+            </Text>
+            <Text style={styles.statDot}> · </Text>
+            <Text style={styles.statText}>{group.rating.toFixed(1)} rating</Text>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Tag filters */}
       <ScrollView
@@ -345,76 +148,92 @@ export default function EventsScreen() {
         ))}
       </ScrollView>
 
-      {/* Events list */}
-      <ScrollView style={styles.eventList}>
-        {filtered.map((event) => (
-          <TouchableOpacity
-            key={event.id}
-            style={styles.eventCard}
-            onPress={() => Linking.openURL(MEETUP_URL)}
-            activeOpacity={0.8}
-          >
-            <View style={styles.eventDate}>
-              <Text style={styles.eventDateMonth}>
-                {event.date.split(" ")[0]}
-              </Text>
-              <Text style={styles.eventDateDay}>
-                {event.date.split(" ")[1]?.replace(",", "")}
-              </Text>
-            </View>
-
-            <View style={styles.eventDetails}>
-              <Text style={styles.eventTitle} numberOfLines={2}>
-                {event.title}
-              </Text>
-              <Text style={styles.eventTime}>
-                {event.time} · {event.location}
-              </Text>
-              <Text style={styles.eventDesc} numberOfLines={2}>
-                {event.description}
-              </Text>
-
-              <View style={styles.eventMeta}>
-                <View style={styles.attendeeBadge}>
-                  <Text style={styles.attendeeText}>
-                    {event.attendees} going
-                    {event.maxCapacity
-                      ? ` / ${event.maxCapacity} max`
-                      : ""}
-                  </Text>
-                </View>
-                {event.type === "online" && (
-                  <View style={styles.onlineBadge}>
-                    <Text style={styles.onlineText}>Online</Text>
-                  </View>
-                )}
-                {event.fee && (
-                  <View style={styles.feeBadge}>
-                    <Text style={styles.feeText}>{event.fee}</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.tagRow}>
-                {event.tags.map((tag) => (
-                  <View key={tag} style={styles.tag}>
-                    <Text style={styles.tagText}>{tag}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+      {/* Loading state */}
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#FF6B6B" />
+          <Text style={styles.loadingText}>Loading events from Meetup...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity onPress={onRefresh} style={styles.retryButton}>
+            <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
-        ))}
-
-        <TouchableOpacity
-          style={styles.viewAllButton}
-          onPress={() => Linking.openURL(MEETUP_URL)}
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.eventList}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF6B6B" />
+          }
         >
-          <Text style={styles.viewAllText}>View all events on Meetup</Text>
-        </TouchableOpacity>
+          {filtered.length === 0 ? (
+            <Text style={styles.emptyText}>No events found for this filter</Text>
+          ) : (
+            filtered.map((event) => {
+              const date = formatEventDate(event.dateTime);
+              const time = formatEventTime(event.dateTime);
+              return (
+                <TouchableOpacity
+                  key={event.id}
+                  style={styles.eventCard}
+                  onPress={() => Linking.openURL(event.eventUrl || MEETUP_URL)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.eventDate}>
+                    <Text style={styles.eventDateMonth}>{date.month}</Text>
+                    <Text style={styles.eventDateDay}>{date.day}</Text>
+                  </View>
 
-        <View style={{ height: 20 }} />
-      </ScrollView>
+                  <View style={styles.eventDetails}>
+                    <Text style={styles.eventTitle} numberOfLines={2}>
+                      {event.title}
+                    </Text>
+                    <Text style={styles.eventTime}>{time}</Text>
+
+                    <View style={styles.eventMeta}>
+                      <View style={styles.attendeeBadge}>
+                        <Text style={styles.attendeeText}>
+                          {event.going} going
+                          {event.maxTickets > 0 ? ` / ${event.maxTickets} max` : ""}
+                        </Text>
+                      </View>
+                      {event.eventType === "ONLINE" && (
+                        <View style={styles.onlineBadge}>
+                          <Text style={styles.onlineText}>Online</Text>
+                        </View>
+                      )}
+                      {event.fee && (
+                        <View style={styles.feeBadge}>
+                          <Text style={styles.feeText}>{event.fee}</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View style={styles.tagRow}>
+                      {event.tags.map((tag) => (
+                        <View key={tag} style={styles.tag}>
+                          <Text style={styles.tagText}>{tag}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })
+          )}
+
+          <TouchableOpacity
+            style={styles.viewAllButton}
+            onPress={() => Linking.openURL(MEETUP_URL)}
+          >
+            <Text style={styles.viewAllText}>View all events on Meetup</Text>
+          </TouchableOpacity>
+
+          <View style={{ height: 20 }} />
+        </ScrollView>
+      )}
 
       <CommunityNav active="Events" />
     </SafeAreaView>
@@ -436,6 +255,14 @@ const styles = StyleSheet.create({
   backButton: { padding: 4 },
   backText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   headerTitle: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  headerRight: { flexDirection: "row", gap: 8 },
+  refreshButton: {
+    backgroundColor: "rgba(255,255,255,0.3)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  refreshText: { color: "#fff", fontSize: 13, fontWeight: "600" },
   meetupButton: {
     backgroundColor: "rgba(255,255,255,0.2)",
     paddingHorizontal: 10,
@@ -467,6 +294,20 @@ const styles = StyleSheet.create({
   filterText: { fontSize: 13, color: "#666", fontWeight: "500" },
   filterTextActive: { color: "#fff" },
 
+  // Loading / Error
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingText: { marginTop: 12, color: "#888", fontSize: 14 },
+  errorText: { color: "#FF6B6B", fontSize: 14, textAlign: "center", marginHorizontal: 32 },
+  retryButton: {
+    marginTop: 12,
+    backgroundColor: "#FF6B6B",
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  retryText: { color: "#fff", fontWeight: "600" },
+  emptyText: { fontSize: 14, color: "#999", textAlign: "center", marginTop: 32 },
+
   // Event list
   eventList: { flex: 1, paddingHorizontal: 16 },
 
@@ -497,7 +338,6 @@ const styles = StyleSheet.create({
   eventDetails: { flex: 1, marginLeft: 12 },
   eventTitle: { fontSize: 15, fontWeight: "700", color: "#333" },
   eventTime: { fontSize: 12, color: "#888", marginTop: 3 },
-  eventDesc: { fontSize: 13, color: "#666", marginTop: 4, lineHeight: 18 },
 
   eventMeta: { flexDirection: "row", marginTop: 8, gap: 8 },
   attendeeBadge: {
