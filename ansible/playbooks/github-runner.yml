@@ -1,0 +1,19 @@
+---
+# Playbook: Set up GitHub Actions self-hosted runner
+#
+# Usage:
+#   1. Generate a runner registration token at:
+#      https://github.com/rajeshkr2016/bkb-app/settings/actions/runners/new
+#
+#   2. Run the playbook:
+#      cd ansible
+#      ansible-playbook playbooks/github-runner.yml \
+#        --extra-vars "github_runner_token=YOUR_TOKEN_HERE" \
+#        --become --ask-become-pass
+#
+- name: Set up GitHub Actions self-hosted runner
+  hosts: metro_bundlers
+  become: true
+
+  roles:
+    - github_runner

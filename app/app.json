@@ -27,10 +27,22 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "static"
     },
     "plugins": [
       "expo-router"
-    ]
+    ],
+    "experiments": {
+      "baseUrl": "/bkb-app"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ea48b504-8848-427e-8ca3-7a1d4c5f815f"
+      }
+    },
+    "owner": "rajeshkr2026"
   }
 }

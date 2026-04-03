@@ -1,0 +1,104 @@
+name: Supabase Deploy
+
+on:
+  push:
+    branches: [master, supabase-cloud]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/config.toml'
+      - 'supabase/seed.sql'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/config.toml'
+      - 'supabase/seed.sql'
+  workflow_dispatch:
+
+env:
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+  SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+jobs:
+  lint:
+    name: Lint Migrations
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify migration files exist
+        run: |
+          if [ ! -d "supabase/migrations" ]; then
+            echo "No migrations directory found"
+            exit 1
+          fi
+          echo "Found migrations:"
+          ls -la supabase/migrations/
+
+      - name: Check migration naming convention
+        run: |
+          for f in supabase/migrations/*.sql; do
+            basename=$(basename "$f")
+            if ! echo "$basename" | grep -qE '^[0-9]{14}_[a-z_]+\.sql$'; then
+              echo "WARNING: $basename does not follow naming convention YYYYMMDDHHMMSS_description.sql"
+            fi
+          done
+
+      - name: Validate SQL syntax (basic checks)
+        run: |
+          for f in supabase/migrations/*.sql; do
+            echo "Checking $(basename $f)..."
+            # Check for common issues
+            if grep -qiE 'DROP\s+DATABASE' "$f"; then
+              echo "ERROR: DROP DATABASE found in $f"
+              exit 1
+            fi
+            if grep -qiE 'TRUNCATE.*CASCADE' "$f"; then
+              echo "WARNING: TRUNCATE CASCADE found in $f"
+            fi
+          done
+          echo "All migration files passed basic checks."
+
+  deploy:
+    name: Deploy to Supabase Cloud
+    runs-on: self-hosted
+    needs: lint
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/supabase-cloud'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verify Supabase CLI is available
+        run: supabase --version
+
+      - name: Link to Supabase project
+        run: |
+          supabase link --project-ref "$SUPABASE_PROJECT_ID"
+
+      - name: Push database migrations
+        run: |
+          supabase db push --linked
+
+      - name: Verify migration status
+        run: |
+          supabase migration list --linked
+
+      - name: Deploy summary
+        run: |
+          echo "## Supabase Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project:** $SUPABASE_PROJECT_ID" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Migrations applied successfully**" >> $GITHUB_STEP_SUMMARY
+
+  notify-failure:
+    name: Notify on Failure
+    runs-on: self-hosted
+    needs: [lint, deploy]
+    if: failure()
+    steps:
+      - name: Report failure
+        run: |
+          echo "::error::Supabase deployment failed for commit ${{ github.sha }} on branch ${{ github.ref_name }}"

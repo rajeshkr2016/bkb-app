@@ -1,10 +1,10 @@
 import "react-native-url-polyfill/auto";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { Platform } from "react-native";
 
 const EXPO_PUBLIC_LOCAL_IP = process.env.EXPO_PUBLIC_LOCAL_IP ?? "127.0.0.1";
-const DEFAULT_SUPABASE_ANON_KEY = "sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH";
+const DEFAULT_SUPABASE_ANON_KEY =
+  process.env.EXPO_PUBLIC_DEFAULT_SUPABASE_ANON_KEY ?? "";
 
 function getDefaultSupabaseUrl() {
   if (Platform.OS === "web" && typeof window !== "undefined") {
@@ -26,11 +26,27 @@ const SUPABASE_URL =
 const SUPABASE_ANON_KEY =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? DEFAULT_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
+let _supabase: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient {
+  if (!_supabase) {
+    // Lazy-import AsyncStorage to avoid "window is not defined" during static rendering
+    const AsyncStorage =
+      require("@react-native-async-storage/async-storage").default;
+    _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: AsyncStorage,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
+    });
+  }
+  return _supabase;
+}
+
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    return (getSupabase() as any)[prop];
   },
 });

@@ -1,0 +1,12 @@
+# GitHub Actions self-hosted runner variables
+# Override defaults from roles/github_runner/defaults/main.yml as needed
+
+github_runner_version: "2.322.0"
+github_runner_repo: "rajeshkr2016/bkb-app"
+github_runner_labels: "self-hosted,linux,ubuntu,supabase"
+github_runner_user: "github-runner"
+github_runner_dir: "/opt/actions-runner"
+supabase_cli_version: "2.20.0"
+nodejs_major_version: "20"
+
+# github_runner_token: set via --extra-vars at runtime (never commit tokens)
