@@ -34,6 +34,9 @@
     "plugins": [
       "expo-router"
     ],
+    "experiments": {
+      "baseUrl": "/bkb-app"
+    },
     "extra": {
       "router": {},
       "eas": {
